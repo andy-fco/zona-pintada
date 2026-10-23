@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --color-artistic-bg: #0B0B0B;
+  --color-artistic-panel: #111111;
+  --color-artistic-orange: #FF5C00;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #0B0B0B;
+  color: #FFFFFF;
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+/* Artistic Flair Halftone / Dotted Background Grid */
+.bg-artistic-dots {
+  background-image: radial-gradient(#FF5C00 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-artistic-dots-subtle {
+  background-image: radial-gradient(rgba(255, 92, 0, 0.25) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+
