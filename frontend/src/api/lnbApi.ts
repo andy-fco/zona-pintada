@@ -105,3 +105,13 @@ export function toBasketballCoach(d: DTResponse, equipos: EquipoResponse[]): Bas
     nextOpponent: "-",
   };
 }
+
+export interface TemporadaResponse {
+  id: number;
+  nombre: string;
+  fechaInicio: string;
+  fechaFin: string | null;
+  activa: boolean;
+}
+
+export const getTemporadaActiva = () => api<TemporadaResponse>("/temporadas/activa");

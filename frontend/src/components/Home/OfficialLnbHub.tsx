@@ -16,12 +16,14 @@ import {
   LNB_STAT_LEADERS 
 } from "../../data/lnbStandingsData";
 import { LNB_MATCHES_FECHA_18 } from "../../data/mockLeaguesAndMatches";
+import { useDatosLnb } from "../../context/DatosLnbContext";
 
 interface OfficialLnbHubProps {
   onOpenSearch?: () => void;
 }
 
 export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) => {
+  const { temporada } = useDatosLnb();
   const [standingFilter, setStandingFilter] = useState<"all" | "norte" | "sur">("all");
   const [activeStatCategory, setActiveStatCategory] = useState<number>(0);
 
@@ -42,7 +44,7 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FF5C00]/10 border border-[#FF5C00]/20 text-[#FF5C00] text-xs font-bold uppercase rounded-full mb-2">
               <Trophy className="w-3.5 h-3.5" />
-              <span>Temporada Regular 2024/25</span>
+              <span>Temporada Regular {temporada}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black italic uppercase text-white tracking-tight">
               Tabla de Posiciones Oficial
@@ -194,7 +196,7 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
               Líderes de la Liga
             </h2>
             <p className="text-sm text-white/50 mt-1">
-              Las figuras más determinantes de la temporada 2024/25.
+              Las figuras más determinantes de la temporada {temporada}.
             </p>
           </div>
 

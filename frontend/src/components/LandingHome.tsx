@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useDatosLnb } from "../context/DatosLnbContext";
 import { 
   Flame, 
   Trophy, 
@@ -34,6 +35,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   onOpenSearch 
 }) => {
   const { user } = useAuth();
+  const { temporada } = useDatosLnb();
   const [savedRoster, setSavedRoster] = useState<TeamRoster | null>(null);
 
   // Load saved roster from Cloud Firestore with local fallback
@@ -249,7 +251,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
             
             <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#FF5C00]/10 border border-[#FF5C00]/20 text-[#FF5C00] text-xs font-bold uppercase rounded-full">
-              <span>Temporada 2024/25 • Oficial LNB</span>
+              <span>Temporada {temporada} • Oficial LNB</span>
             </div>
 
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black italic uppercase leading-none tracking-tight text-white">

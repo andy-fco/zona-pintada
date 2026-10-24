@@ -64,7 +64,7 @@ const DEFAULT_INITIAL_ROSTER = (): {
 
 export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => {
   const { user } = useAuth();
-  const { jugadores, dts } = useDatosLnb();
+  const { jugadores, dts, temporada } = useDatosLnb();
   const storageKey = user ? `zona_pintada_roster_${user.uid}` : "zona_pintada_roster_guest";
 
   const [activeView, setActiveView] = useState<"court" | "market">("court");
@@ -385,7 +385,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 bg-[#FF5C00] text-black font-black text-[10px] uppercase tracking-widest">
-                TEMPORADA REGULAR 2024/25
+                TEMPORADA REGULAR {temporada}
               </span>
               <span className="text-white/40 text-xs font-mono">
                 • Cierre Jornada: Viernes 20:00 hs

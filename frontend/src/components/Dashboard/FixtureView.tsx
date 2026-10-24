@@ -1,8 +1,10 @@
 import React from "react";
 import { Calendar, MapPin, Tv, Clock, Radio, Shield, CheckCircle2 } from "lucide-react";
 import { LNB_MATCHES_FECHA_18 } from "../../data/mockLeaguesAndMatches";
+import { useDatosLnb } from "../../context/DatosLnbContext";
 
 export const FixtureView: React.FC = () => {
+  const { temporada } = useDatosLnb();
   return (
     <div className="space-y-8">
       
@@ -14,7 +16,7 @@ export const FixtureView: React.FC = () => {
               LIGA NACIONAL DE BÁSQUET
             </span>
             <span className="text-white/40 text-xs font-mono">
-              Temporada 2024/25
+              Temporada {temporada}
             </span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-black italic uppercase tracking-tight text-white">
