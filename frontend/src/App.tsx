@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { DatosLnbProvider } from "./context/DatosLnbContext";
 import { Navbar } from "./components/Navbar";
 import { LandingHome } from "./components/LandingHome";
 import { ProtectedDashboard } from "./components/ProtectedDashboard";
@@ -129,7 +130,9 @@ function MainContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainContent />
+      <DatosLnbProvider>
+        <MainContent />
+      </DatosLnbProvider>
     </AuthProvider>
   );
 }

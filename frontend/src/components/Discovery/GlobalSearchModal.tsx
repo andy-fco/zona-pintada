@@ -17,6 +17,7 @@ import {
   Crown
 } from "lucide-react";
 import { LNB_PLAYERS } from "../../data/lnbData";
+import { useDatosLnb } from "../../context/DatosLnbContext";
 import { formatSalary, BasketballPlayer } from "../../types/basketball";
 import { COMMUNITY_LEAGUES, CommunityLeague } from "../../data/mockLeaguesAndMatches";
 import { fetchRealUsersAndFranchises, RealRankingUser } from "../../lib/rosterService";
@@ -40,6 +41,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   onGoToDashboard
 }) => {
   const { user } = useAuth();
+  const { jugadores } = useDatosLnb();
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<SearchTab>("all");
   const [joinedLeagues, setJoinedLeagues] = useState<string[]>([]);
@@ -71,15 +73,15 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   // Filter Players
   const matchedPlayers = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q && activeTab !== "players") return LNB_PLAYERS.slice(0, 4);
-    return LNB_PLAYERS.filter(p => 
+    if (!q && activeTab !== "players") return jugadores.slice(0, 4);
+    return jugadores.filter(p => 
       p.name.toLowerCase().includes(q) ||
       p.nickname?.toLowerCase().includes(q) ||
       p.team.toLowerCase().includes(q) ||
       p.teamShort.toLowerCase().includes(q) ||
       p.position.toLowerCase().includes(q)
     );
-  }, [query, activeTab]);
+  }, [jugadores, query, activeTab]);
 
   // Filter Real Fantasy Users & Teams from Firestore
   const matchedUsers = useMemo(() => {

@@ -6,6 +6,7 @@ import {
   formatSalary 
 } from "../../types/basketball";
 import { LNB_PLAYERS, LNB_COACHES, LNB_TEAMS } from "../../data/lnbData";
+import { useDatosLnb } from "../../context/DatosLnbContext";
 import { 
   Search, 
   Filter, 
@@ -46,12 +47,13 @@ export const PlayerMarketList: React.FC<PlayerMarketListProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<string>("ALL");
   const [sortBy, setSortBy] = useState<SortOption>('val_desc');
+  const { jugadores, dts, equipos } = useDatosLnb();
 
   // Filter and sort players
   const filteredPlayers = useMemo(() => {
     if (activeCategory === 'COACH') return [];
 
-    return LNB_PLAYERS.filter((player) => {
+    return jugadores.filter((player) => {
       // Position filter
       if (activeCategory !== 'ALL' && player.position !== activeCategory) {
         return false;
@@ -87,13 +89,13 @@ export const PlayerMarketList: React.FC<PlayerMarketListProps> = ({
           return b.avgVal - a.avgVal;
       }
     });
-  }, [activeCategory, selectedTeam, searchQuery, sortBy]);
+  }, [jugadores, activeCategory, selectedTeam, searchQuery, sortBy]);
 
   // Filter coaches
   const filteredCoaches = useMemo(() => {
     if (activeCategory !== 'ALL' && activeCategory !== 'COACH') return [];
 
-    return LNB_COACHES.filter((coach) => {
+    return dts.filter((coach) => {
       if (selectedTeam !== 'ALL' && coach.team !== selectedTeam) {
         return false;
       }
@@ -105,7 +107,7 @@ export const PlayerMarketList: React.FC<PlayerMarketListProps> = ({
       }
       return true;
     }).sort((a, b) => b.price - a.price);
-  }, [activeCategory, selectedTeam, searchQuery]);
+  }, [dts, activeCategory, selectedTeam, searchQuery]);
 
   return (
     <div className="w-full bg-[#0E0E0E] border border-white/10 p-4 sm:p-6 shadow-2xl space-y-6">
@@ -172,7 +174,7 @@ export const PlayerMarketList: React.FC<PlayerMarketListProps> = ({
             className="w-full bg-[#111111] border border-white/10 px-3 py-2.5 text-xs text-white uppercase font-bold focus:outline-none focus:border-[#FF5C00] transition-colors cursor-pointer"
           >
             <option value="ALL">Todos los Clubes (LNB)</option>
-            {LNB_TEAMS.map((t) => (
+            {equipos.map((t) => (
               <option key={t.id} value={t.name} className="bg-[#111111] text-white">
                 {t.name} ({t.city})
               </option>

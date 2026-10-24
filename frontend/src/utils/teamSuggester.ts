@@ -6,7 +6,7 @@ import {
   PlayerPosition,
   TacticalRoleId 
 } from "../types/basketball";
-import { LNB_PLAYERS, LNB_COACHES, TOTAL_BUDGET } from "../data/lnbData";
+import { LNB_PLAYERS as JUGADORES_PRUEBA, LNB_COACHES as DTS_PRUEBA, TOTAL_BUDGET } from "../data/lnbData";
 
 export interface SuggestedTeam {
   starters: {
@@ -26,7 +26,10 @@ export interface SuggestedTeam {
  * Intelligently generates a balanced, competitive fantasy team that
  * GUARANTEES the total expenditure is <= TOTAL_BUDGET ($110M).
  */
-export function generateBudgetCompliantTeam(): SuggestedTeam {
+export function generateBudgetCompliantTeam(
+  LNB_PLAYERS: BasketballPlayer[] = JUGADORES_PRUEBA,
+  LNB_COACHES: BasketballCoach[] = DTS_PRUEBA
+): SuggestedTeam {
   // 1. Pick a coach within a reasonable price (7.5M to 9M)
   const affordableCoaches = LNB_COACHES.filter((c) => c.price <= 9500000);
   const selectedCoach = affordableCoaches[Math.floor(Math.random() * affordableCoaches.length)] || LNB_COACHES[LNB_COACHES.length - 1];

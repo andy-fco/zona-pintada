@@ -18,6 +18,7 @@ import { RosterSummaryBar } from "./RosterSummaryBar";
 import { PlayerDetailModal } from "./PlayerDetailModal";
 import { saveRoster, loadRoster, updateFranchiseName } from "../../lib/rosterService";
 import { generateBudgetCompliantTeam } from "../../utils/teamSuggester";
+import { useDatosLnb } from "../../context/DatosLnbContext";
 import { 
   Trophy, 
   Flame, 
@@ -63,6 +64,7 @@ const DEFAULT_INITIAL_ROSTER = (): {
 
 export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => {
   const { user } = useAuth();
+  const { jugadores, dts } = useDatosLnb();
   const storageKey = user ? `zona_pintada_roster_${user.uid}` : "zona_pintada_roster_guest";
 
   const [activeView, setActiveView] = useState<"court" | "market">("court");
@@ -301,7 +303,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Autocomplete: Intelligently pick an optimal, balanced team strictly within $110M
   const handleAutoComplete = () => {
-    const suggested = generateBudgetCompliantTeam();
+    const suggested = generateBudgetCompliantTeam(jugadores, dts);
     setStarters(suggested.starters);
     setBench(suggested.bench);
     setCoach(suggested.coach);
