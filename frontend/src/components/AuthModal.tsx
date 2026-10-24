@@ -21,7 +21,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [usuario, setUsuario] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
@@ -44,8 +46,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    if (password.length < 6) {
-      setFormError("La contraseña debe tener al menos 6 caracteres.");
+      if (password.length < 8) {
+        setFormError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
 
@@ -54,8 +56,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setFormError("Las contraseñas no coinciden.");
         return;
       }
-      if (!displayName.trim()) {
-        setFormError("Por favor ingresá tu nombre de DT o apodo de juego.");
+      if (!nombre.trim() || !apellido.trim() || usuario.trim().length < 3) {
+        setFormError("Completá nombre, apellido y un usuario de al menos 3 caracteres.");
         return;
       }
     }
@@ -63,7 +65,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsSubmitting(true);
     try {
       if (mode === "signup") {
-        await signUp(email.trim(), password, displayName.trim());
+        await signUp({
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          mail: email.trim(),
+          usuario: usuario.trim(),
+          password,
+        });
         setSignupSuccess(true);
         setTimeout(() => {
           onClose();
@@ -86,7 +94,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setPassword("basket123");
     if (mode === "signup") {
       setConfirmPassword("basket123");
-      setDisplayName("DT San Lorenzo Fan");
+      setNombre("Demo");
+      setApellido("Zona Pintada");
+      setUsuario("dtdemo");
     }
   };
 
@@ -197,33 +207,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-60 ml-1 text-white block">
-                  Nombre de DT / Franquicia
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
-                  <input
-                    type="text"
-                    id="input-displayname"
-                    required
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Ej: DT Magnano, Quilmes Basket"
-                    className="w-full bg-white/5 border border-white/10 rounded-none pl-10 pr-4 py-3.5 text-sm focus:outline-none focus:border-[#FF5C00] transition-colors text-white placeholder-white/20"
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  required
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Nombre"
+                  className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-3.5 text-sm focus:outline-none focus:border-[#FF5C00] transition-colors text-white placeholder-white/20"
+                />
+                <input
+                  type="text"
+                  required
+                  value={apellido}
+                  onChange={(e) => setApellido(e.target.value)}
+                  placeholder="Apellido"
+                  className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-3.5 text-sm focus:outline-none focus:border-[#FF5C00] transition-colors text-white placeholder-white/20"
+                />
+                <input
+                  type="text"
+                  required
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
+                  placeholder="Usuario (ej: dtmagnano)"
+                  className="col-span-2 w-full bg-white/5 border border-white/10 rounded-none px-4 py-3.5 text-sm focus:outline-none focus:border-[#FF5C00] transition-colors text-white placeholder-white/20"
+                />
               </div>
             )}
 
             <div className="space-y-1.5">
               <label className="text-[10px] uppercase tracking-widest font-bold opacity-60 ml-1 text-white block">
-                Email
+                {mode === "login" ? "Usuario o email" : "Email"}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
                 <input
-                  type="email"
+                  type={mode === "login" ? "text" : "email"}
                   id="input-email"
                   required
                   value={email}

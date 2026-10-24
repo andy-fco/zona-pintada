@@ -41,7 +41,11 @@ function MainContent() {
   };
 
   const handleGoToBuilder = () => {
-    setCurrentView("builder");
+    if (user) {
+      setCurrentView("builder");
+    } else {
+      handleOpenAuth("login");
+    }
   };
 
   if (loading) {
@@ -63,7 +67,7 @@ function MainContent() {
         onOpenAuth={handleOpenAuth}
         currentView={currentView}
         setCurrentView={(view) => {
-          if (view === "dashboard" && !user) {
+          if ((view === "dashboard" || view === "builder") && !user) {
             handleOpenAuth("login");
           } else {
             setCurrentView(view);
@@ -101,7 +105,7 @@ function MainContent() {
         onClose={() => setIsSearchModalOpen(false)}
         onGoToBuilder={() => {
           setIsSearchModalOpen(false);
-          setCurrentView("builder");
+          handleGoToBuilder();
         }}
         onGoToDashboard={() => {
           setIsSearchModalOpen(false);
