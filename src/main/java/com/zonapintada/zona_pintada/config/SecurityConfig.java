@@ -57,21 +57,13 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/semanas"
-                        ).authenticated()
-
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/semanas/generar"
-                        ).hasRole("ADMINISTRADOR")
-
-                        .requestMatchers(
-                                HttpMethod.GET,
+                                "/api/semanas",
                                 "/api/semanas/*/fechas"
                         ).authenticated()
 
                         .requestMatchers(
                                 HttpMethod.POST,
+                                "/api/semanas/generar",
                                 "/api/semanas/*/fechas/generar"
                         ).hasRole("ADMINISTRADOR")
 
@@ -103,6 +95,37 @@ public class SecurityConfig {
                                 "/api/dts/**"
                         ).hasRole("ADMINISTRADOR")
 
+                        // Escritura de partidos y estadísticas: solo administrador.
+                        .requestMatchers("/api/admin/partidos/**")
+                        .hasRole("ADMINISTRADOR")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/partidos/**"
+                        ).hasRole("ADMINISTRADOR")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/partidos/**"
+                        ).hasRole("ADMINISTRADOR")
+
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/partidos/**"
+                        ).hasRole("ADMINISTRADOR")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/partidos/**"
+                        ).hasRole("ADMINISTRADOR")
+
+                        // Lectura de partidos y estadísticas: usuarios autenticados.
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/partidos",
+                                "/api/partidos/**"
+                        ).authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -116,7 +139,8 @@ public class SecurityConfig {
 
     private Converter<Jwt, ? extends AbstractAuthenticationToken>
     jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        JwtAuthenticationConverter converter =
+                new JwtAuthenticationConverter();
 
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
