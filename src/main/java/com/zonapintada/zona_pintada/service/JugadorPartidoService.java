@@ -1,3 +1,4 @@
+
 package com.zonapintada.zona_pintada.service;
 
 import com.zonapintada.zona_pintada.dto.ActualizarEstadisticasJugadorRequest;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -27,16 +27,19 @@ public class JugadorPartidoService {
     private final JugadorRepository jugadorRepository;
     private final PartidoRepository partidoRepository;
     private final EquipoRepository equipoRepository;
+    private final PuntuacionFantasyService puntuacionFantasyService;
 
     public JugadorPartidoService(
             JugadorPartidoRepository jugadorPartidoRepository,
             JugadorRepository jugadorRepository,
             PartidoRepository partidoRepository,
-            EquipoRepository equipoRepository) {
+            EquipoRepository equipoRepository,
+            PuntuacionFantasyService puntuacionFantasyService) {
         this.jugadorPartidoRepository = jugadorPartidoRepository;
         this.jugadorRepository = jugadorRepository;
         this.partidoRepository = partidoRepository;
         this.equipoRepository = equipoRepository;
+        this.puntuacionFantasyService = puntuacionFantasyService;
     }
 
     @Transactional(readOnly = true)
@@ -51,8 +54,7 @@ public class JugadorPartidoService {
     }
 
     @Transactional(readOnly = true)
-    public JugadorPartidoResponse obtener(
-            Integer partidoId, Integer jugadorId) {
+    public JugadorPartidoResponse obtener(Integer partidoId, Integer jugadorId) {
         return JugadorPartidoResponse.desde(
                 buscarEstadistica(partidoId, jugadorId));
     }
@@ -112,7 +114,7 @@ public class JugadorPartidoService {
                 request.getValoracion());
 
         estadistica.setPuntosFantasy(
-                BigDecimal.valueOf(request.getValoracion()));
+                puntuacionFantasyService.calcular(estadistica));
 
         return JugadorPartidoResponse.desde(
                 jugadorPartidoRepository.save(estadistica));
@@ -153,7 +155,7 @@ public class JugadorPartidoService {
                 request.getValoracion());
 
         estadistica.setPuntosFantasy(
-                BigDecimal.valueOf(request.getValoracion()));
+                puntuacionFantasyService.calcular(estadistica));
 
         return JugadorPartidoResponse.desde(
                 jugadorPartidoRepository.save(estadistica));
