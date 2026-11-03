@@ -59,6 +59,20 @@ public class JugadorPartidoService {
                 buscarEstadistica(partidoId, jugadorId));
     }
 
+    @Transactional(readOnly = true)
+    public List<JugadorPartidoResponse> listarPorJugador(Integer jugadorId) {
+        if (!jugadorRepository.existsById(jugadorId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Jugador no encontrado");
+        }
+
+        return jugadorPartidoRepository
+                .findByJugador_IdOrderByPartido_FechaDescPartido_HoraDesc(jugadorId)
+                .stream()
+                .map(JugadorPartidoResponse::desde)
+                .toList();
+    }
+
     public JugadorPartidoResponse registrar(
             Integer partidoId, RegistrarJugadorPartidoRequest request) {
 

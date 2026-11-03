@@ -22,8 +22,12 @@ public class PartidoController {
     }
 
     @GetMapping("/partidos")
-    public ResponseEntity<List<PartidoResponse>> listarTodos() {
-        return ResponseEntity.ok(partidoService.listarTodos());
+    public ResponseEntity<List<PartidoResponse>> listar(
+            @RequestParam(required = false) Integer semanaId,
+            @RequestParam(required = false) Integer fechaId,
+            @RequestParam(required = false) Integer equipoId) {
+        return ResponseEntity.ok(
+                partidoService.listar(semanaId, fechaId, equipoId));
     }
 
     @GetMapping("/partidos/{id}")
@@ -44,5 +48,11 @@ public class PartidoController {
             @PathVariable Integer id,
             @Valid @RequestBody ActualizarPartidoRequest request) {
         return ResponseEntity.ok(partidoService.actualizar(id, request));
+    }
+
+    @DeleteMapping("/admin/partidos/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+        partidoService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

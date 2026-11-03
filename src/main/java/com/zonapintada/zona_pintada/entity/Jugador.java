@@ -3,7 +3,9 @@ package com.zonapintada.zona_pintada.entity;
 import com.zonapintada.zona_pintada.enums.ManoHabil;
 import com.zonapintada.zona_pintada.enums.PosicionJugador;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
@@ -41,7 +43,7 @@ public class Jugador {
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "mano_habil")
+    @Column(name = "mano_habil", columnDefinition = "mano_habil_enum")
     private ManoHabil manoHabil;
 
     private String pais;
@@ -49,10 +51,12 @@ public class Jugador {
     @Column(nullable = false)
     private BigDecimal valor;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

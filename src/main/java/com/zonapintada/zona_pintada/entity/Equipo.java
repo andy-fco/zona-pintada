@@ -7,6 +7,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -27,24 +29,18 @@ public class Equipo {
     @Column(nullable = false)
     private String ciudad;
 
-    @Column(name = "escudo_url", nullable = false)
+    @Column(name = "escudo_url")
     private String escudoUrl;
 
     @Column(nullable = false)
     private String estadio;
 
-    @Column(
-            name = "created_at",
-            insertable = false,
-            updatable = false
-    )
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(
-            name = "updated_at",
-            insertable = false,
-            updatable = false
-    )
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     public Equipo() {

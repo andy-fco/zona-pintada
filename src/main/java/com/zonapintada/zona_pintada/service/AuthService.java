@@ -32,10 +32,7 @@ public class AuthService {
 
         Usuario usuario = usuarioRepository.findByUsuario(identificador)
                 .or(() -> usuarioRepository.findByMail(identificador))
-                .orElseThrow(() -> {
-                    System.out.println("LOGIN: usuario NO encontrado");
-                    return new CredencialesInvalidasException();
-                });
+                .orElseThrow(CredencialesInvalidasException::new);
 
         boolean coincide = passwordEncoder.matches(
                 request.getPassword(),

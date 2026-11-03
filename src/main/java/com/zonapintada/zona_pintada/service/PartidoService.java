@@ -7,8 +7,10 @@ import com.zonapintada.zona_pintada.entity.Equipo;
 import com.zonapintada.zona_pintada.entity.Fecha;
 import com.zonapintada.zona_pintada.entity.Partido;
 import com.zonapintada.zona_pintada.enums.EstadoPartido;
+import com.zonapintada.zona_pintada.repository.DTPartidoRepository;
 import com.zonapintada.zona_pintada.repository.EquipoRepository;
 import com.zonapintada.zona_pintada.repository.FechaRepository;
+import com.zonapintada.zona_pintada.repository.JugadorPartidoRepository;
 import com.zonapintada.zona_pintada.repository.PartidoRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,21 +26,30 @@ public class PartidoService {
     private final EquipoRepository equipoRepository;
     private final FechaRepository fechaRepository;
     private final DTPartidoService dtPartidoService;
+    private final JugadorPartidoRepository jugadorPartidoRepository;
+    private final DTPartidoRepository dtPartidoRepository;
 
     public PartidoService(
             PartidoRepository partidoRepository,
             EquipoRepository equipoRepository,
             FechaRepository fechaRepository,
-            DTPartidoService dtPartidoService) {
+            DTPartidoService dtPartidoService,
+            JugadorPartidoRepository jugadorPartidoRepository,
+            DTPartidoRepository dtPartidoRepository) {
         this.partidoRepository = partidoRepository;
         this.equipoRepository = equipoRepository;
         this.fechaRepository = fechaRepository;
         this.dtPartidoService = dtPartidoService;
+        this.jugadorPartidoRepository = jugadorPartidoRepository;
+        this.dtPartidoRepository = dtPartidoRepository;
     }
 
     @Transactional(readOnly = true)
-    public List<PartidoResponse> listarTodos() {
-        return partidoRepository.findAllByOrderByFechaAscHoraAsc()
+    public List<PartidoResponse> listar(
+            Integer semanaId,
+            Integer fechaId,
+            Integer equipoId) {
+        return partidoRepository.buscar(semanaId, fechaId, equipoId)
                 .stream()
                 .map(PartidoResponse::desde)
                 .toList();
@@ -75,6 +86,13 @@ public class PartidoService {
                         HttpStatus.NOT_FOUND, "No existe la fecha de competencia"
                 ));
 
+        if (!fechaCompetencia.getFecha().equals(request.getFecha())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha del partido no coincide con la fecha de competencia"
+            );
+        }
+
         Partido partido = new Partido();
         partido.setEquipoLocal(equipoLocal);
         partido.setEquipoVisitante(equipoVisitante);
@@ -102,16 +120,42 @@ public class PartidoService {
         }
 
         Partido partido = buscarPartido(id);
+
+        if (!partido.getFecha().equals(request.getFecha())) {
+            Fecha fechaCompetencia = fechaRepository
+                    .findByFecha(request.getFecha())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "No existe una fecha de competencia para el día indicado"
+                    ));
+            partido.setFechaCompetencia(fechaCompetencia);
+        }
+
         partido.setFecha(request.getFecha());
         partido.setHora(request.getHora());
         partido.setPuntosLocal(request.getPuntosLocal());
         partido.setPuntosVisitante(request.getPuntosVisitante());
         partido.setEstado(request.getEstado());
 
-        Partido partidoGuardado = partidoRepository.save(partido);
+        Partido partidoGuardado = partidoRepository.saveAndFlush(partido);
         dtPartidoService.procesarResultado(partidoGuardado);
 
         return PartidoResponse.desde(partidoGuardado);
+    }
+
+    @Transactional
+    public void eliminar(Integer id) {
+        Partido partido = buscarPartido(id);
+
+        if (jugadorPartidoRepository.existsByPartido_Id(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "El partido tiene estadísticas de jugadores cargadas. Eliminalas antes de borrarlo"
+            );
+        }
+
+        dtPartidoRepository.deleteByPartido_Id(id);
+        partidoRepository.delete(partido);
     }
 
     private void validarMarcador(ActualizarPartidoRequest request) {

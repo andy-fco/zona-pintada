@@ -2,7 +2,9 @@ package com.zonapintada.zona_pintada.entity;
 
 import com.zonapintada.zona_pintada.enums.EstadoPartido;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
@@ -46,10 +48,12 @@ public class Partido {
     @Column(nullable = false, columnDefinition = "estado_partido")
     private EstadoPartido estado;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     public Partido() {

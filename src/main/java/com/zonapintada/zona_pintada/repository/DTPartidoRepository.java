@@ -19,5 +19,9 @@ public interface DTPartidoRepository
             Integer partidoId
     );
 
+    List<DTPartido> findByDt_IdOrderByPartido_FechaDescPartido_HoraDesc(
+            Integer dtId
+    );
+
     void deleteByPartido_Id(Integer partidoId);
 }

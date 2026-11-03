@@ -28,6 +28,12 @@ public class DTPartidoController {
         return dtPartidoService.obtenerPorPartidoYDT(partidoId, dtId);
     }
 
+    @GetMapping("/api/dts/{dtId}/estadisticas")
+    public List<DTPartidoResponse> listarPorDT(
+            @PathVariable Integer dtId) {
+        return dtPartidoService.listarPorDT(dtId);
+    }
+
     @PostMapping("/api/admin/partidos/{partidoId}/estadisticas/dt/recalcular")
     public List<DTPartidoResponse> recalcular(
             @PathVariable Integer partidoId) {

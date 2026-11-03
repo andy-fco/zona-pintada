@@ -1,11 +1,14 @@
 package com.zonapintada.zona_pintada.controller;
 
+import com.zonapintada.zona_pintada.dto.ActualizarUsuarioRequest;
+import com.zonapintada.zona_pintada.dto.CambiarPasswordRequest;
 import com.zonapintada.zona_pintada.dto.CrearUsuarioRequest;
 import com.zonapintada.zona_pintada.dto.UsuarioResponse;
 import com.zonapintada.zona_pintada.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -44,5 +47,28 @@ public class UsuarioController {
 
         Integer usuarioId = Integer.valueOf(jwt.getSubject());
         return usuarioService.obtenerPorId(usuarioId);
+    }
+
+    @PutMapping("/me")
+    public UsuarioResponse actualizarPerfil(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ActualizarUsuarioRequest request
+    ) {
+        return usuarioService.actualizarPerfil(
+                Integer.valueOf(jwt.getSubject()),
+                request
+        );
+    }
+
+    @PutMapping("/me/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cambiarPassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody CambiarPasswordRequest request
+    ) {
+        usuarioService.cambiarPassword(
+                Integer.valueOf(jwt.getSubject()),
+                request
+        );
     }
 }

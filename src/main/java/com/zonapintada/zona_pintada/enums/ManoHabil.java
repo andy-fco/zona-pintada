@@ -1,6 +1,7 @@
 
 package com.zonapintada.zona_pintada.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.EnumeratedValue;
 
 public enum ManoHabil {
@@ -14,6 +15,7 @@ public enum ManoHabil {
         this.valor = valor;
     }
 
+    @JsonValue
     public String getValor() {
         return valor;
     }
