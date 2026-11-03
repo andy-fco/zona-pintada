@@ -15,4 +15,6 @@ public interface TemporadaRepository
     List<Temporada> findAllByOrderByFechaInicioDesc();
 
     boolean existsByNombre(String nombre);
+
+    boolean existsByNombreAndIdNot(String nombre, Integer id);
 }

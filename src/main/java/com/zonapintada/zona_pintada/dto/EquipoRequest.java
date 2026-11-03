@@ -18,7 +18,7 @@ public class EquipoRequest {
     @Size(max = 100, message = "La ciudad no puede superar los 100 caracteres.")
     private String ciudad;
 
-    @Size(max = 500, message = "La URL del escudo no puede superar los 500 caracteres.")
+    @Size(max = 255, message = "La URL del escudo no puede superar los 255 caracteres.")
     private String escudoUrl;
 
     @NotBlank(message = "El estadio es obligatorio.")

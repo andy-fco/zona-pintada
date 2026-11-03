@@ -37,6 +37,13 @@ public class JugadorPartidoController {
                 jugadorPartidoService.obtener(partidoId, jugadorId));
     }
 
+    @GetMapping("/jugadores/{jugadorId}/estadisticas")
+    public ResponseEntity<List<JugadorPartidoResponse>> listarPorJugador(
+            @PathVariable Integer jugadorId) {
+        return ResponseEntity.ok(
+                jugadorPartidoService.listarPorJugador(jugadorId));
+    }
+
     @PostMapping("/admin/partidos/{partidoId}/estadisticas/jugadores")
     public ResponseEntity<JugadorPartidoResponse> registrar(
             @PathVariable Integer partidoId,

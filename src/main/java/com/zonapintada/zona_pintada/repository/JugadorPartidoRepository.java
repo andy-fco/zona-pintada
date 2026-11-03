@@ -15,4 +15,9 @@ public interface JugadorPartidoRepository
 
     Optional<JugadorPartido> findByJugador_IdAndPartido_Id(
             Integer jugadorId, Integer partidoId);
+
+    List<JugadorPartido> findByJugador_IdOrderByPartido_FechaDescPartido_HoraDesc(
+            Integer jugadorId);
+
+    boolean existsByPartido_Id(Integer partidoId);
 }

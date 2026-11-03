@@ -45,6 +45,22 @@ public class DTPartidoService {
     }
 
     @Transactional(readOnly = true)
+    public List<DTPartidoResponse> listarPorDT(Integer dtId) {
+        if (!dtRepository.existsById(dtId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No existe el DT solicitado"
+            );
+        }
+
+        return dtPartidoRepository
+                .findByDt_IdOrderByPartido_FechaDescPartido_HoraDesc(dtId)
+                .stream()
+                .map(DTPartidoResponse::desde)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public DTPartidoResponse obtenerPorPartidoYDT(
             Integer partidoId,
             Integer dtId) {
@@ -97,7 +113,10 @@ public class DTPartidoService {
         dtPartidoRepository.deleteByPartido_Id(partido.getId());
         dtPartidoRepository.flush();
 
-        List<DT> entrenadores = dtRepository.findAll();
+        List<DT> entrenadores = dtRepository.findAllByEquipo_IdIn(List.of(
+                partido.getEquipoLocal().getId(),
+                partido.getEquipoVisitante().getId()
+        ));
 
         for (DT dt : entrenadores) {
             Equipo equipoDT = dt.getEquipo();

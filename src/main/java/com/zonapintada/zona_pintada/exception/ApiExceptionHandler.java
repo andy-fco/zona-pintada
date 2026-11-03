@@ -4,11 +4,15 @@ package com.zonapintada.zona_pintada.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import com.zonapintada.zona_pintada.service.AuthService.CredencialesInvalidasException;
 import com.zonapintada.zona_pintada.exception.UsuarioNoEncontradoException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,8 +37,54 @@ public class ApiExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(Map.of(
                         "mensaje",
-                        "No se pudo registrar el usuario porque existe un dato duplicado o incompatible."
+                        "La operación entra en conflicto con datos existentes o relacionados."
                 ));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> manejarResponseStatus(
+            ResponseStatusException exception
+    ) {
+        String mensaje = exception.getReason() != null
+                ? exception.getReason()
+                : "No se pudo procesar la solicitud.";
+
+        return ResponseEntity
+                .status(exception.getStatusCode())
+                .body(Map.of("mensaje", mensaje));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> manejarCuerpoInvalido(
+            HttpMessageNotReadableException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of(
+                        "mensaje",
+                        "El cuerpo de la solicitud es inválido o tiene valores no reconocidos."
+                ));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> manejarParametroInvalido(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of(
+                        "mensaje",
+                        "El parámetro " + exception.getName() + " tiene un valor inválido."
+                ));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, String>> manejarRutaInexistente(
+            NoResourceFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of("mensaje", "La ruta solicitada no existe."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -2,6 +2,7 @@
 package com.zonapintada.zona_pintada.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -21,7 +22,7 @@ public class JugadorRequest {
     @Size(max = 100, message = "El apellido no puede superar los 100 caracteres.")
     private String apellido;
 
-    @Size(max = 500, message = "La URL de la foto no puede superar los 500 caracteres.")
+    @Size(max = 255, message = "La URL de la foto no puede superar los 255 caracteres.")
     private String fotoUrl;
 
     private LocalDate fechaNacimiento;
@@ -30,6 +31,7 @@ public class JugadorRequest {
     private String ciudad;
 
     @DecimalMin(value = "0.01", message = "La altura debe ser mayor que cero.")
+    @Digits(integer = 1, fraction = 2, message = "La altura debe expresarse en metros, por ejemplo 1.98.")
     private BigDecimal altura;
 
     @NotBlank(message = "La posición es obligatoria.")
@@ -45,11 +47,12 @@ public class JugadorRequest {
     )
     private String manoHabil;
 
-    @Size(max = 100, message = "El país no puede superar los 100 caracteres.")
+    @Size(max = 50, message = "El país no puede superar los 50 caracteres.")
     private String pais;
 
     @NotNull(message = "El valor del jugador es obligatorio.")
     @DecimalMin(value = "0.00", message = "El valor no puede ser negativo.")
+    @Digits(integer = 10, fraction = 2, message = "El valor admite hasta 10 enteros y 2 decimales.")
     private BigDecimal valor;
 
     @NotNull(message = "El equipo es obligatorio.")
