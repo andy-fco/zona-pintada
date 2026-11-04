@@ -497,6 +497,7 @@ CREATE TABLE public.semana_competencia (
     fecha_inicio date NOT NULL,
     fecha_fin date NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    cerrada_at timestamp with time zone,
     CONSTRAINT chk_semana_fechas CHECK (((fecha_fin = (fecha_inicio + 6)) AND (EXTRACT(isodow FROM fecha_inicio) = (1)::numeric))),
     CONSTRAINT chk_semana_numero CHECK ((numero_semana > 0))
 );

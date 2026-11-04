@@ -14,6 +14,7 @@ public class SemanaCompetenciaResponse {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private OffsetDateTime createdAt;
+    private OffsetDateTime cerradaAt;
 
     public SemanaCompetenciaResponse() {
     }
@@ -24,13 +25,15 @@ public class SemanaCompetenciaResponse {
             Integer numeroSemana,
             LocalDate fechaInicio,
             LocalDate fechaFin,
-            OffsetDateTime createdAt) {
+            OffsetDateTime createdAt,
+            OffsetDateTime cerradaAt) {
         this.id = id;
         this.temporadaId = temporadaId;
         this.numeroSemana = numeroSemana;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.createdAt = createdAt;
+        this.cerradaAt = cerradaAt;
     }
 
     public Integer getId() {
@@ -81,6 +84,14 @@ public class SemanaCompetenciaResponse {
         this.createdAt = createdAt;
     }
 
+    public OffsetDateTime getCerradaAt() {
+        return cerradaAt;
+    }
+
+    public void setCerradaAt(OffsetDateTime cerradaAt) {
+        this.cerradaAt = cerradaAt;
+    }
+
     public static SemanaCompetenciaResponse desde(
             SemanaCompetencia semana) {
         return new SemanaCompetenciaResponse(
@@ -89,7 +100,8 @@ public class SemanaCompetenciaResponse {
                 semana.getNumeroSemana(),
                 semana.getFechaInicio(),
                 semana.getFechaFin(),
-                semana.getCreatedAt()
+                semana.getCreatedAt(),
+                semana.getCerradaAt()
         );
     }
 }

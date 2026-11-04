@@ -113,6 +113,7 @@ public class SemanaCompetenciaService {
             SemanaCompetenciaRequest request) {
 
         SemanaCompetencia semana = buscarSemana(id);
+        validarSemanaAbierta(semana);
         Temporada temporada = buscarTemporada(request.getTemporadaId());
         validarInicioEnLunes(request.getFechaInicio());
 
@@ -153,7 +154,9 @@ public class SemanaCompetenciaService {
 
     @Transactional
     public void eliminar(Integer id) {
-        semanaRepository.delete(buscarSemana(id));
+        SemanaCompetencia semana = buscarSemana(id);
+        validarSemanaAbierta(semana);
+        semanaRepository.delete(semana);
     }
 
     @Transactional
@@ -213,6 +216,15 @@ public class SemanaCompetenciaService {
                 .stream()
                 .map(SemanaCompetenciaResponse::desde)
                 .toList();
+    }
+
+    private void validarSemanaAbierta(SemanaCompetencia semana) {
+        if (semana.getCerradaAt() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La semana está cerrada y no se puede modificar"
+            );
+        }
     }
 
     private void validarInicioEnLunes(LocalDate fechaInicio) {

@@ -3,6 +3,7 @@ package com.zonapintada.zona_pintada.controller;
 import com.zonapintada.zona_pintada.dto.CrearEquipoFantasyRequest;
 import com.zonapintada.zona_pintada.dto.EquipoFantasyResponse;
 import com.zonapintada.zona_pintada.dto.NombreEquipoFantasyRequest;
+import com.zonapintada.zona_pintada.dto.ResultadoSemanalResponse;
 import com.zonapintada.zona_pintada.service.EquipoFantasyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -62,6 +63,13 @@ public class EquipoFantasyController {
             @PathVariable Integer id
     ) {
         return ResponseEntity.ok(equipoFantasyService.obtenerPorId(id));
+    }
+
+    @GetMapping("/{id}/resultados")
+    public ResponseEntity<List<ResultadoSemanalResponse>> listarResultados(
+            @PathVariable Integer id
+    ) {
+        return ResponseEntity.ok(equipoFantasyService.listarResultados(id));
     }
 
     @PutMapping("/me/nombre")

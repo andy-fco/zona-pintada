@@ -34,6 +34,13 @@ public interface SemanaCompetenciaRepository
 
     boolean existsByTemporada_Id(Integer temporadaId);
 
+    boolean existsByTemporada_IdAndNumeroSemanaLessThanAndCerradaAtIsNull(
+            Integer temporadaId,
+            Integer numeroSemana);
+
+    Optional<SemanaCompetencia> findFirstByTemporada_IdAndCerradaAtIsNullOrderByNumeroSemanaAsc(
+            Integer temporadaId);
+
     Optional<SemanaCompetencia> findByTemporada_IdAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
             Integer temporadaId,
             LocalDate fechaDesde,

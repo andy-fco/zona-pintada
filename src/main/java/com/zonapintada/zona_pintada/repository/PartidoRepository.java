@@ -1,16 +1,22 @@
 package com.zonapintada.zona_pintada.repository;
 
 import com.zonapintada.zona_pintada.entity.Partido;
+import com.zonapintada.zona_pintada.enums.EstadoPartido;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface PartidoRepository extends JpaRepository<Partido, Integer> {
 
     boolean existsByFechaCompetencia_Id(Integer fechaId);
+
+    boolean existsByFechaCompetencia_Semana_IdAndEstadoIn(
+            Integer semanaId,
+            Collection<EstadoPartido> estados);
 
     @EntityGraph(attributePaths = {"equipoLocal", "equipoVisitante"})
     @Query("""

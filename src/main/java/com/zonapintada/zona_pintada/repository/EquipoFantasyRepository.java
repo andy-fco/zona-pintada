@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,8 @@ public interface EquipoFantasyRepository extends JpaRepository<EquipoFantasy, In
     boolean existsByUsuario_IdAndTemporada_Id(Integer usuarioId, Integer temporadaId);
 
     Optional<EquipoFantasy> findByUsuario_IdAndTemporada_Id(Integer usuarioId, Integer temporadaId);
+
+    List<EquipoFantasy> findByTemporada_IdAndCreatedAtBefore(Integer temporadaId, Instant limite);
 
     @EntityGraph(attributePaths = {"usuario", "temporada"})
     @Query("""

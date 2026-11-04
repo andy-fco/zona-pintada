@@ -2,6 +2,8 @@ package com.zonapintada.zona_pintada.service;
 
 import com.zonapintada.zona_pintada.dto.CrearEquipoFantasyRequest;
 import com.zonapintada.zona_pintada.dto.EquipoFantasyResponse;
+import com.zonapintada.zona_pintada.dto.PuntosEquipoFantasy;
+import com.zonapintada.zona_pintada.dto.ResultadoSemanalResponse;
 import com.zonapintada.zona_pintada.entity.*;
 import com.zonapintada.zona_pintada.enums.RolPlantelFantasy;
 import com.zonapintada.zona_pintada.enums.RolUsuario;
@@ -27,6 +29,10 @@ public class EquipoFantasyService {
     private final TemporadaRepository temporadaRepository;
     private final JugadorRepository jugadorRepository;
     private final DTRepository dtRepository;
+    private final EquipoFantasyResultadoSemanalRepository resultadoRepository;
+    private final EquipoFantasyJugadorHistorialRepository jugadorHistorialRepository;
+    private final EquipoFantasyDTHistorialRepository dtHistorialRepository;
+    private final PuntosEquipoFantasyService puntosService;
 
     public EquipoFantasyService(
             EquipoFantasyRepository equipoFantasyRepository,
@@ -35,7 +41,11 @@ public class EquipoFantasyService {
             UsuarioRepository usuarioRepository,
             TemporadaRepository temporadaRepository,
             JugadorRepository jugadorRepository,
-            DTRepository dtRepository
+            DTRepository dtRepository,
+            EquipoFantasyResultadoSemanalRepository resultadoRepository,
+            EquipoFantasyJugadorHistorialRepository jugadorHistorialRepository,
+            EquipoFantasyDTHistorialRepository dtHistorialRepository,
+            PuntosEquipoFantasyService puntosService
     ) {
         this.equipoFantasyRepository = equipoFantasyRepository;
         this.equipoFantasyJugadorRepository = equipoFantasyJugadorRepository;
@@ -44,6 +54,10 @@ public class EquipoFantasyService {
         this.temporadaRepository = temporadaRepository;
         this.jugadorRepository = jugadorRepository;
         this.dtRepository = dtRepository;
+        this.resultadoRepository = resultadoRepository;
+        this.jugadorHistorialRepository = jugadorHistorialRepository;
+        this.dtHistorialRepository = dtHistorialRepository;
+        this.puntosService = puntosService;
     }
 
     @Transactional
@@ -167,7 +181,12 @@ public class EquipoFantasyService {
 
         equipoFantasyDTRepository.save(equipoFantasyDT);
 
-        return convertirAResponse(equipoFantasy, plantel, dt);
+        return convertirAResponse(
+                equipoFantasy,
+                plantel,
+                dt,
+                new PuntosEquipoFantasy(0, 0)
+        );
     }
 
     @Transactional(readOnly = true)
@@ -179,9 +198,27 @@ public class EquipoFantasyService {
                 ? temporadaId
                 : obtenerTemporadaActiva().getId();
 
-        return equipoFantasyRepository.buscar(id, usuarioId)
+        List<EquipoFantasy> equipos = equipoFantasyRepository.buscar(id, usuarioId);
+        Map<Integer, PuntosEquipoFantasy> puntos =
+                puntosService.calcularEnCurso(id, equipos);
+
+        return equipos.stream()
+                .map(equipo -> convertirAResponse(equipo, puntos.get(equipo.getId())))
+                .sorted(Comparator
+                        .comparing(EquipoFantasyResponse::getPuntosTotales)
+                        .reversed()
+                        .thenComparing(EquipoFantasyResponse::getNombre))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResultadoSemanalResponse> listarResultados(Integer id) {
+        buscarEquipo(id);
+
+        return resultadoRepository
+                .findByEquipoFantasy_IdOrderBySemana_NumeroSemanaAsc(id)
                 .stream()
-                .map(this::convertirAResponse)
+                .map(ResultadoSemanalResponse::desde)
                 .toList();
     }
 
@@ -218,6 +255,9 @@ public class EquipoFantasyService {
     public void eliminar(Integer id) {
         EquipoFantasy equipoFantasy = buscarEquipo(id);
 
+        resultadoRepository.deleteByEquipoFantasy_Id(id);
+        jugadorHistorialRepository.deleteByEquipoFantasy_Id(id);
+        dtHistorialRepository.deleteByEquipoFantasy_Id(id);
         equipoFantasyJugadorRepository.deleteByEquipoFantasy_Id(id);
         equipoFantasyDTRepository.deleteById(id);
         equipoFantasyRepository.delete(equipoFantasy);
@@ -252,6 +292,18 @@ public class EquipoFantasyService {
     }
 
     private EquipoFantasyResponse convertirAResponse(EquipoFantasy equipoFantasy) {
+        Map<Integer, PuntosEquipoFantasy> puntos = puntosService.calcularEnCurso(
+                equipoFantasy.getTemporada().getId(),
+                List.of(equipoFantasy)
+        );
+
+        return convertirAResponse(equipoFantasy, puntos.get(equipoFantasy.getId()));
+    }
+
+    private EquipoFantasyResponse convertirAResponse(
+            EquipoFantasy equipoFantasy,
+            PuntosEquipoFantasy puntos
+    ) {
         Integer id = equipoFantasy.getId();
 
         List<EquipoFantasyJugador> plantel = equipoFantasyJugadorRepository
@@ -264,13 +316,14 @@ public class EquipoFantasyService {
                         "El equipo fantasy no tiene un DT asignado."
                 ));
 
-        return convertirAResponse(equipoFantasy, plantel, dt);
+        return convertirAResponse(equipoFantasy, plantel, dt, puntos);
     }
 
     private EquipoFantasyResponse convertirAResponse(
             EquipoFantasy equipoFantasy,
             List<EquipoFantasyJugador> plantel,
-            DT dt
+            DT dt,
+            PuntosEquipoFantasy puntos
     ) {
         BigDecimal presupuestoUtilizado = dt.getValor();
 
@@ -316,7 +369,8 @@ public class EquipoFantasyService {
                 presupuestoUtilizado,
                 equipoFantasy.getPresupuestoMaximo().subtract(presupuestoUtilizado),
                 equipoFantasy.getTokensTraspaso(),
-                equipoFantasy.getPuntosTotales(),
+                puntos.getPuntosSemana(),
+                puntos.getPuntosTotales(),
                 dtResponse,
                 jugadoresResponse
         );

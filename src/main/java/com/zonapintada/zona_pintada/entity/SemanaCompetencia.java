@@ -32,6 +32,9 @@ public class SemanaCompetencia {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "cerrada_at")
+    private OffsetDateTime cerradaAt;
+
     public SemanaCompetencia() {
     }
 
@@ -92,5 +95,13 @@ public class SemanaCompetencia {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public OffsetDateTime getCerradaAt() {
+        return cerradaAt;
+    }
+
+    public void setCerradaAt(OffsetDateTime cerradaAt) {
+        this.cerradaAt = cerradaAt;
     }
 }
