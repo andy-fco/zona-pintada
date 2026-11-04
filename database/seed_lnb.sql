@@ -1,14 +1,14 @@
 -- =====================================================================
 -- Zona Pintada - Seed de datos de la LNB (temporada 2026/27)
--- Borra equipos, jugadores y DT y los vuelve a crear desde cero.
+-- Borra equipos, jugadores, DT y equipos fantasy, y vuelve a crear los tres primeros.
 -- Se puede ejecutar cuantas veces sea necesario: siempre deja el mismo estado.
--- ATENCION: TRUNCATE ... CASCADE tambien vacia las tablas que dependen de
--- equipo, jugador y dt (partidos, estadisticas por partido y planteles fantasy).
+-- ATENCION: TRUNCATE ... CASCADE tambien vacia las tablas que dependen de ellos
+-- (partidos, estadisticas por partido, planteles fantasy y resultados semanales).
 -- No toca usuario, temporada ni semana_competencia.
 -- =====================================================================
 BEGIN;
 
-TRUNCATE public.jugador, public.dt, public.equipo RESTART IDENTITY CASCADE;
+TRUNCATE public.equipo_fantasy, public.jugador, public.dt, public.equipo RESTART IDENTITY CASCADE;
 
 -- Equipos
 INSERT INTO public.equipo (nombre, nombre_corto, ciudad, estadio) VALUES

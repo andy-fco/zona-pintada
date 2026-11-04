@@ -3,6 +3,7 @@ package com.zonapintada.zona_pintada.controller;
 
 import com.zonapintada.zona_pintada.dto.SemanaCompetenciaRequest;
 import com.zonapintada.zona_pintada.dto.SemanaCompetenciaResponse;
+import com.zonapintada.zona_pintada.service.CierreSemanaService;
 import com.zonapintada.zona_pintada.service.SemanaCompetenciaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,10 +25,13 @@ import java.util.List;
 public class SemanaCompetenciaController {
 
     private final SemanaCompetenciaService semanaService;
+    private final CierreSemanaService cierreSemanaService;
 
     public SemanaCompetenciaController(
-            SemanaCompetenciaService semanaService) {
+            SemanaCompetenciaService semanaService,
+            CierreSemanaService cierreSemanaService) {
         this.semanaService = semanaService;
+        this.cierreSemanaService = cierreSemanaService;
     }
 
     @GetMapping
@@ -74,5 +78,17 @@ public class SemanaCompetenciaController {
         return ResponseEntity.ok(
                 semanaService.generarDeTemporadaActiva()
         );
+    }
+
+    @PostMapping("/{id}/cierre")
+    public ResponseEntity<SemanaCompetenciaResponse> cerrar(
+            @PathVariable Integer id) {
+        return ResponseEntity.ok(cierreSemanaService.cerrar(id));
+    }
+
+    @PostMapping("/{id}/recalculo")
+    public ResponseEntity<SemanaCompetenciaResponse> recalcular(
+            @PathVariable Integer id) {
+        return ResponseEntity.ok(cierreSemanaService.recalcular(id));
     }
 }

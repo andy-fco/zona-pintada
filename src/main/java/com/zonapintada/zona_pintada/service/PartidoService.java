@@ -93,6 +93,8 @@ public class PartidoService {
             );
         }
 
+        validarSemanaAbierta(fechaCompetencia);
+
         Partido partido = new Partido();
         partido.setEquipoLocal(equipoLocal);
         partido.setEquipoVisitante(equipoVisitante);
@@ -128,6 +130,7 @@ public class PartidoService {
                             HttpStatus.BAD_REQUEST,
                             "No existe una fecha de competencia para el día indicado"
                     ));
+            validarSemanaAbierta(fechaCompetencia);
             partido.setFechaCompetencia(fechaCompetencia);
         }
 
@@ -156,6 +159,15 @@ public class PartidoService {
 
         dtPartidoRepository.deleteByPartido_Id(id);
         partidoRepository.delete(partido);
+    }
+
+    private void validarSemanaAbierta(Fecha fechaCompetencia) {
+        if (fechaCompetencia.getSemana().getCerradaAt() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La fecha de competencia pertenece a una semana cerrada"
+            );
+        }
     }
 
     private void validarMarcador(ActualizarPartidoRequest request) {

@@ -17,6 +17,7 @@ public class EquipoFantasyResponse {
     private final BigDecimal presupuestoUtilizado;
     private final BigDecimal presupuestoRestante;
     private final Integer tokensTraspaso;
+    private final Integer puntosSemana;
     private final Integer puntosTotales;
     private final DTFantasyResponse dt;
     private final List<JugadorFantasyResponse> jugadores;
@@ -32,6 +33,7 @@ public class EquipoFantasyResponse {
             BigDecimal presupuestoUtilizado,
             BigDecimal presupuestoRestante,
             Integer tokensTraspaso,
+            Integer puntosSemana,
             Integer puntosTotales,
             DTFantasyResponse dt,
             List<JugadorFantasyResponse> jugadores
@@ -46,6 +48,7 @@ public class EquipoFantasyResponse {
         this.presupuestoUtilizado = presupuestoUtilizado;
         this.presupuestoRestante = presupuestoRestante;
         this.tokensTraspaso = tokensTraspaso;
+        this.puntosSemana = puntosSemana;
         this.puntosTotales = puntosTotales;
         this.dt = dt;
         this.jugadores = jugadores;
@@ -89,6 +92,10 @@ public class EquipoFantasyResponse {
 
     public Integer getTokensTraspaso() {
         return tokensTraspaso;
+    }
+
+    public Integer getPuntosSemana() {
+        return puntosSemana;
     }
 
     public Integer getPuntosTotales() {
