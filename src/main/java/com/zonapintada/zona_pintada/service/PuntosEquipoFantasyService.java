@@ -72,6 +72,27 @@ public class PuntosEquipoFantasyService {
     }
 
     @Transactional(readOnly = true)
+    public Map<Integer, Integer> calcularSemanaAbierta(
+            Integer semanaId,
+            List<EquipoFantasy> equipos) {
+
+        if (equipos.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Integer> ids = equipos.stream().map(EquipoFantasy::getId).toList();
+        Map<Integer, Integer> resultado = new HashMap<>();
+
+        for (PuntosEquipoSemana fila : resultadoRepository.calcularSemanasAbiertas(ids)) {
+            if (fila.getSemanaId().equals(semanaId)) {
+                resultado.put(fila.getEquipoFantasyId(), redondear(fila.getPuntos()));
+            }
+        }
+
+        return resultado;
+    }
+
+    @Transactional(readOnly = true)
     public Map<Integer, Integer> calcularSemanaCerrada(Integer semanaId) {
         Map<Integer, Integer> resultado = new HashMap<>();
 

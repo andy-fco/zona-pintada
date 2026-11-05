@@ -26,7 +26,7 @@ public interface EquipoFantasyResultadoSemanalRepository
     List<EquipoFantasyResultadoSemanal> findByEquipoFantasy_IdOrderBySemana_NumeroSemanaAsc(
             Integer equipoFantasyId);
 
-    @EntityGraph(attributePaths = {"equipoFantasy"})
+    @EntityGraph(attributePaths = {"equipoFantasy", "equipoFantasy.usuario"})
     List<EquipoFantasyResultadoSemanal> findBySemana_Id(Integer semanaId);
 
     List<EquipoFantasyResultadoSemanal> findByEquipoFantasy_IdInAndSemana_NumeroSemanaGreaterThan(
