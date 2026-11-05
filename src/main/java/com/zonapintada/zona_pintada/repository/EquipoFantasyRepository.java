@@ -16,6 +16,7 @@ public interface EquipoFantasyRepository extends JpaRepository<EquipoFantasy, In
 
     Optional<EquipoFantasy> findByUsuario_IdAndTemporada_Id(Integer usuarioId, Integer temporadaId);
 
+    @EntityGraph(attributePaths = {"usuario"})
     List<EquipoFantasy> findByTemporada_IdAndCreatedAtBefore(Integer temporadaId, Instant limite);
 
     @EntityGraph(attributePaths = {"usuario", "temporada"})

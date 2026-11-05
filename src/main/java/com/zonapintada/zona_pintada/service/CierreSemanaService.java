@@ -80,16 +80,7 @@ public class CierreSemanaService {
 
         validarCierre(semana);
 
-        Instant finDeSemana = semana.getFechaFin()
-                .plusDays(1)
-                .atStartOfDay(ZONA_LIGA)
-                .toInstant();
-
-        List<EquipoFantasy> equipos = equipoFantasyRepository
-                .findByTemporada_IdAndCreatedAtBefore(
-                        semana.getTemporada().getId(),
-                        finDeSemana
-                );
+        List<EquipoFantasy> equipos = buscarEquiposDeSemana(semana);
 
         if (!equipos.isEmpty()) {
             guardarHistoriales(semana, equipos);
@@ -146,6 +137,18 @@ public class CierreSemanaService {
         }
 
         return SemanaCompetenciaResponse.desde(semana);
+    }
+
+    public List<EquipoFantasy> buscarEquiposDeSemana(SemanaCompetencia semana) {
+        Instant finDeSemana = semana.getFechaFin()
+                .plusDays(1)
+                .atStartOfDay(ZONA_LIGA)
+                .toInstant();
+
+        return equipoFantasyRepository.findByTemporada_IdAndCreatedAtBefore(
+                semana.getTemporada().getId(),
+                finDeSemana
+        );
     }
 
     private SemanaCompetencia bloquearYBuscarSemana(Integer semanaId) {
