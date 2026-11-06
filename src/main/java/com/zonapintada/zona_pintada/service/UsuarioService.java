@@ -5,10 +5,12 @@ import com.zonapintada.zona_pintada.dto.CambiarPasswordRequest;
 import com.zonapintada.zona_pintada.dto.CrearUsuarioAdminRequest;
 import com.zonapintada.zona_pintada.dto.CrearUsuarioRequest;
 import com.zonapintada.zona_pintada.dto.UsuarioResponse;
+import com.zonapintada.zona_pintada.entity.EquipoFantasy;
 import com.zonapintada.zona_pintada.entity.Usuario;
 import com.zonapintada.zona_pintada.enums.RolUsuario;
 import com.zonapintada.zona_pintada.exception.UsuarioDuplicadoException;
 import com.zonapintada.zona_pintada.exception.UsuarioNoEncontradoException;
+import com.zonapintada.zona_pintada.repository.EquipoFantasyRepository;
 import com.zonapintada.zona_pintada.repository.UsuarioRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -24,13 +26,19 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EquipoFantasyRepository equipoFantasyRepository;
+    private final EquipoFantasyService equipoFantasyService;
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            EquipoFantasyRepository equipoFantasyRepository,
+            EquipoFantasyService equipoFantasyService
     ) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.equipoFantasyRepository = equipoFantasyRepository;
+        this.equipoFantasyService = equipoFantasyService;
     }
 
     @Transactional
@@ -163,7 +171,28 @@ public class UsuarioService {
             );
         }
 
-        usuarioRepository.delete(buscarUsuario(id));
+        eliminarConEquipos(buscarUsuario(id));
+    }
+
+    @Transactional
+    public void eliminarCuenta(Integer id) {
+        Usuario usuario = buscarUsuario(id);
+
+        if (usuario.getRol() == RolUsuario.administrador) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Una cuenta de administrador no puede eliminarse desde este endpoint."
+            );
+        }
+
+        eliminarConEquipos(usuario);
+    }
+
+    private void eliminarConEquipos(Usuario usuario) {
+        for (EquipoFantasy equipo : equipoFantasyRepository.findByUsuario_Id(usuario.getId())) {
+            equipoFantasyService.eliminar(equipo.getId());
+        }
+        usuarioRepository.delete(usuario);
     }
 
     private Usuario buscarUsuario(Integer id) {

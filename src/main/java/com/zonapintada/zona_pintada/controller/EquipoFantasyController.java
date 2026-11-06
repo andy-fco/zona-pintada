@@ -3,7 +3,9 @@ package com.zonapintada.zona_pintada.controller;
 import com.zonapintada.zona_pintada.dto.CrearEquipoFantasyRequest;
 import com.zonapintada.zona_pintada.dto.EquipoFantasyResponse;
 import com.zonapintada.zona_pintada.dto.NombreEquipoFantasyRequest;
+import com.zonapintada.zona_pintada.dto.PuntosSemanaEquipoResponse;
 import com.zonapintada.zona_pintada.dto.ResultadoSemanalResponse;
+import com.zonapintada.zona_pintada.service.DetallePuntosSemanaService;
 import com.zonapintada.zona_pintada.service.EquipoFantasyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,14 @@ import java.util.List;
 public class EquipoFantasyController {
 
     private final EquipoFantasyService equipoFantasyService;
+    private final DetallePuntosSemanaService detallePuntosSemanaService;
 
-    public EquipoFantasyController(EquipoFantasyService equipoFantasyService) {
+    public EquipoFantasyController(
+            EquipoFantasyService equipoFantasyService,
+            DetallePuntosSemanaService detallePuntosSemanaService
+    ) {
         this.equipoFantasyService = equipoFantasyService;
+        this.detallePuntosSemanaService = detallePuntosSemanaService;
     }
 
     @PostMapping
@@ -81,6 +88,19 @@ public class EquipoFantasyController {
                 equipoFantasyService.actualizarNombreDelUsuario(
                         Integer.valueOf(jwt.getSubject()),
                         request.getNombre()
+                )
+        );
+    }
+
+    @GetMapping("/me/semanas/{semanaId}")
+    public ResponseEntity<PuntosSemanaEquipoResponse> obtenerPuntosSemanaDelUsuario(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer semanaId
+    ) {
+        return ResponseEntity.ok(
+                detallePuntosSemanaService.obtenerDelUsuario(
+                        Integer.valueOf(jwt.getSubject()),
+                        semanaId
                 )
         );
     }

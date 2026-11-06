@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
@@ -70,5 +71,13 @@ public class UsuarioController {
                 Integer.valueOf(jwt.getSubject()),
                 request
         );
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminarCuenta(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        usuarioService.eliminarCuenta(Integer.valueOf(jwt.getSubject()));
     }
 }
