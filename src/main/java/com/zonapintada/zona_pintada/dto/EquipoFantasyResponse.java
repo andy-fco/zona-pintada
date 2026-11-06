@@ -1,5 +1,6 @@
 package com.zonapintada.zona_pintada.dto;
 
+import com.zonapintada.zona_pintada.enums.PosicionJugador;
 import com.zonapintada.zona_pintada.enums.RolPlantelFantasy;
 
 import java.math.BigDecimal;
@@ -171,6 +172,7 @@ public class EquipoFantasyResponse {
         private final boolean titular;
         private final RolPlantelFantasy rol;
         private final BigDecimal multiplicador;
+        private final PosicionJugador posicion;
 
         public JugadorFantasyResponse(
                 Integer id,
@@ -181,7 +183,8 @@ public class EquipoFantasyResponse {
                 String equipoNombre,
                 boolean titular,
                 RolPlantelFantasy rol,
-                BigDecimal multiplicador
+                BigDecimal multiplicador,
+                PosicionJugador posicion
         ) {
             this.id = id;
             this.nombre = nombre;
@@ -192,6 +195,7 @@ public class EquipoFantasyResponse {
             this.titular = titular;
             this.rol = rol;
             this.multiplicador = multiplicador;
+            this.posicion = posicion;
         }
 
         public Integer getId() {
@@ -228,6 +232,10 @@ public class EquipoFantasyResponse {
 
         public BigDecimal getMultiplicador() {
             return multiplicador;
+        }
+
+        public PosicionJugador getPosicion() {
+            return posicion;
         }
     }
 }

@@ -23,7 +23,6 @@ import java.util.List;
 
 @Service
 public class LigaService {
-
     private static final int PUNTOS_POR_VICTORIA = 2;
     private static final int PUNTOS_POR_DERROTA = 1;
     private static final int CANTIDAD_LIDERES = 10;
@@ -93,7 +92,6 @@ public class LigaService {
                         "No existe la semana indicada."
                 ));
 
-        // La consulta ya viene ordenada de mayor a menor puntaje fantasy.
         List<JugadorDestacadoResponse> ranking = jugadorPartidoRepository
                 .rendimientoPorSemana(semanaId)
                 .stream()
@@ -108,8 +106,6 @@ public class LigaService {
                     .ifPresent(quinteto::add);
         }
 
-        // El mejor de toda la semana es necesariamente el mejor de su posicion,
-        // por lo tanto siempre forma parte del quinteto.
         JugadorDestacadoResponse mvp = ranking.isEmpty() ? null : ranking.get(0);
 
         return new DestacadosSemanaResponse(

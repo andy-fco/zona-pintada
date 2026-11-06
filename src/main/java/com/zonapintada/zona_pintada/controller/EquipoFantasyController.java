@@ -5,8 +5,10 @@ import com.zonapintada.zona_pintada.dto.EquipoFantasyResponse;
 import com.zonapintada.zona_pintada.dto.NombreEquipoFantasyRequest;
 import com.zonapintada.zona_pintada.dto.PuntosSemanaEquipoResponse;
 import com.zonapintada.zona_pintada.dto.ResultadoSemanalResponse;
+import com.zonapintada.zona_pintada.dto.SugerenciaEquipoResponse;
 import com.zonapintada.zona_pintada.service.DetallePuntosSemanaService;
 import com.zonapintada.zona_pintada.service.EquipoFantasyService;
+import com.zonapintada.zona_pintada.service.SugerenciaEquipoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,13 +24,21 @@ public class EquipoFantasyController {
 
     private final EquipoFantasyService equipoFantasyService;
     private final DetallePuntosSemanaService detallePuntosSemanaService;
+    private final SugerenciaEquipoService sugerenciaEquipoService;
 
     public EquipoFantasyController(
             EquipoFantasyService equipoFantasyService,
-            DetallePuntosSemanaService detallePuntosSemanaService
+            DetallePuntosSemanaService detallePuntosSemanaService,
+            SugerenciaEquipoService sugerenciaEquipoService
     ) {
         this.equipoFantasyService = equipoFantasyService;
         this.detallePuntosSemanaService = detallePuntosSemanaService;
+        this.sugerenciaEquipoService = sugerenciaEquipoService;
+    }
+
+    @GetMapping("/sugerencia")
+    public ResponseEntity<SugerenciaEquipoResponse> sugerir() {
+        return ResponseEntity.ok(sugerenciaEquipoService.sugerir());
     }
 
     @PostMapping

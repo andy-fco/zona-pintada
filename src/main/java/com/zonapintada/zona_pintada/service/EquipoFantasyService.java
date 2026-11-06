@@ -344,7 +344,8 @@ public class EquipoFantasyService {
                     jugador.getEquipo().getNombre(),
                     integrante.isTitular(),
                     integrante.getRol(),
-                    integrante.getMultiplicador()
+                    integrante.getMultiplicador(),
+                    jugador.getPosicion()
             ));
         }
 
