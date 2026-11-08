@@ -11,7 +11,7 @@ import {
   limit 
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { TeamRoster, RosterSlot, TACTICAL_ROLES } from "../types/basketball";
+import { TeamRoster, RosterSlot, getRoleMultiplier } from "../types/basketball";
 import { PrivateLeague, LeagueMember, GlobalRankingEntry } from "../types/league";
 
 // Helper keys for local caching
@@ -85,7 +85,7 @@ export async function saveRoster(
   if (roster.starters) {
     (Object.values(roster.starters) as RosterSlot[]).forEach((slot) => {
       if (slot.player) {
-        const mult = TACTICAL_ROLES[slot.role]?.multiplier || 1;
+        const mult = getRoleMultiplier(slot.role, true);
         projectedValuation += slot.player.avgVal * mult;
       }
     });
@@ -93,7 +93,7 @@ export async function saveRoster(
   if (roster.bench) {
     roster.bench.forEach((slot) => {
       if (slot.player) {
-        const mult = TACTICAL_ROLES[slot.role]?.multiplier || 1;
+        const mult = getRoleMultiplier(slot.role, false);
         projectedValuation += slot.player.avgVal * mult;
       }
     });

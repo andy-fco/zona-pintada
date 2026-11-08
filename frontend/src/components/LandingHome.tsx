@@ -16,7 +16,7 @@ import {
   Users,
   Compass
 } from "lucide-react";
-import { TeamRoster, RosterSlot, formatSalary, TACTICAL_ROLES } from "../types/basketball";
+import { TeamRoster, RosterSlot, formatSalary, TACTICAL_ROLES, getRoleMultiplier } from "../types/basketball";
 import { TOTAL_BUDGET } from "../data/lnbData";
 import { OfficialLnbHub } from "./Home/OfficialLnbHub";
 import { loadRoster } from "../lib/rosterService";
@@ -79,14 +79,14 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   let projectedValuation = 0;
   starterSlots.forEach((s) => {
     if (s.player) {
-      const mult = TACTICAL_ROLES[s.role]?.multiplier || 1.0;
+      const mult = getRoleMultiplier(s.role, true);
       projectedValuation += s.player.avgVal * mult;
     }
   });
   if (savedRoster?.bench) {
     savedRoster.bench.forEach((b) => {
       if (b.player) {
-        const mult = TACTICAL_ROLES[b.role]?.multiplier || 0.5;
+        const mult = getRoleMultiplier(b.role, false);
         projectedValuation += b.player.avgVal * mult;
       }
     });
@@ -196,7 +196,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {starterSlots.map((slot) => {
                   if (!slot.player) return null;
-                  const role = TACTICAL_ROLES[slot.role];
+                  const role = TACTICAL_ROLES[slot.role] ?? TACTICAL_ROLES.NORMAL;
                   return (
                     <div 
                       key={slot.slotId}
@@ -210,7 +210,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         {slot.player.name}
                       </div>
                       <div className="text-[10px] text-white/50">
-                        {role.name} • <span className="text-[#FF5C00] font-mono">{role.multiplier}x</span>
+                        {role.name} • <span className="text-[#FF5C00] font-mono">{getRoleMultiplier(slot.role, true)}x</span>
                       </div>
                     </div>
                   );
@@ -375,7 +375,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   Multiplicadores
                 </h3>
                 <p className="text-xs text-white/50 leading-relaxed">
-                  Asigná roles tácticos: Capitán (1.20x), Sexto Hombre (1.10x) y rotación para optimizar tu puntaje.
+                  Elegí un Capitán (1.20x) entre tus titulares y un Sexto Hombre (0.80x) entre tus suplentes para optimizar tu puntaje.
                 </p>
               </div>
 

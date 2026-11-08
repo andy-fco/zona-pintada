@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
         <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] uppercase tracking-widest font-semibold text-white/40">
           <span>$110M Presupuesto</span>
           <span className="text-white/20">•</span>
-          <span>0.25x - 1.20x Multiplicadores</span>
+          <span>0.50x - 1.20x Multiplicadores</span>
           <span className="text-white/20">•</span>
           <span className="text-[#FF5C00]">Temporada Regular 2024/25</span>
         </div>

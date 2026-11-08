@@ -1,13 +1,8 @@
 export type PlayerPosition = 'PG' | 'SG' | 'SF' | 'PF' | 'C';
 
-export type TacticalRoleId = 
-  | 'CAPTAIN'       // 1.20x
-  | 'CO_CAPTAIN'    // 1.15x
-  | 'SIXTH_MAN'     // 1.10x
-  | 'DEFENSIVE'     // 1.05x
-  | 'ROTATION'      // 0.75x
-  | 'BENCH'         // 0.50x
-  | 'DEEP_BENCH';   // 0.25x
+// Roles del plantel fantasy, iguales a los del back (RolPlantelFantasy):
+// capitan, sexto_hombre y normal.
+export type TacticalRoleId = 'CAPTAIN' | 'SIXTH_MAN' | 'NORMAL';
 
 export interface TacticalRole {
   id: TacticalRoleId;
@@ -21,52 +16,31 @@ export const TACTICAL_ROLES: Record<TacticalRoleId, TacticalRole> = {
   CAPTAIN: {
     id: 'CAPTAIN',
     name: 'Capitán',
-    multiplier: 1.20,
-    description: 'Estrella principal del quinteto. Multiplica el 100% de su valoración por 1.20.',
+    multiplier: 1.2,
+    description: 'Multiplica sus puntos x1.2. Tiene que haber uno solo y debe ser titular.',
     tagColor: 'bg-[#FF5C00] text-black border-[#FF5C00]'
-  },
-  CO_CAPTAIN: {
-    id: 'CO_CAPTAIN',
-    name: 'Tirador Clave',
-    multiplier: 1.15,
-    description: 'Goleador principal del perímetro con 1.15x sobre su puntaje.',
-    tagColor: 'bg-orange-500/20 text-[#FF5C00] border-orange-500/40'
   },
   SIXTH_MAN: {
     id: 'SIXTH_MAN',
     name: 'Sexto Hombre',
-    multiplier: 1.10,
-    description: 'Generador de puntos instantáneo desde el banco con 1.10x.',
+    multiplier: 0.8,
+    description: 'Suplente que suma x0.8 en vez de x0.5. Tiene que haber uno solo y debe ser suplente.',
     tagColor: 'bg-white text-black border-white'
   },
-  DEFENSIVE: {
-    id: 'DEFENSIVE',
-    name: 'Especialista Defensivo',
-    multiplier: 1.05,
-    description: 'Rebotes y recuperos clave con 1.05x sobre su planilla oficial.',
-    tagColor: 'bg-white/20 text-white border-white/30'
-  },
-  ROTATION: {
-    id: 'ROTATION',
-    name: 'Rotación',
-    multiplier: 0.75,
-    description: 'Minutos de aporte con coeficiente de 0.75x.',
+  NORMAL: {
+    id: 'NORMAL',
+    name: 'Normal',
+    multiplier: 1.0,
+    description: 'Titular suma x1.0 y suplente x0.5.',
     tagColor: 'bg-white/10 text-white/80 border-white/20'
-  },
-  BENCH: {
-    id: 'BENCH',
-    name: 'Suplente',
-    multiplier: 0.50,
-    description: 'Jugador económico de soporte con 0.50x.',
-    tagColor: 'bg-white/5 text-white/60 border-white/10'
-  },
-  DEEP_BENCH: {
-    id: 'DEEP_BENCH',
-    name: 'Suplente Profundo',
-    multiplier: 0.25,
-    description: 'Jugador de salario mínimo para estirar el presupuesto de $110M.',
-    tagColor: 'bg-black/60 text-white/40 border-white/5'
   }
+};
+
+// Multiplicador real según el back: depende del rol y de si es titular
+export const getRoleMultiplier = (role: TacticalRoleId, isStarter: boolean): number => {
+  if (role === 'CAPTAIN') return 1.2;
+  if (role === 'SIXTH_MAN') return 0.8;
+  return isStarter ? 1.0 : 0.5;
 };
 
 export interface RecentGameStat {

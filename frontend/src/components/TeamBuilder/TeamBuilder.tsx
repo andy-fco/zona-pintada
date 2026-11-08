@@ -7,9 +7,9 @@ import {
   RosterSlot, 
   CoachSlot, 
   TeamRoster, 
-  TACTICAL_ROLES, 
   TacticalRoleId, 
-  formatSalary 
+  formatSalary,
+  getRoleMultiplier
 } from "../../types/basketball";
 import { LNB_PLAYERS, LNB_COACHES, TOTAL_BUDGET } from "../../data/lnbData";
 import { CourtView } from "./CourtView";
@@ -48,16 +48,18 @@ const DEFAULT_INITIAL_ROSTER = (): {
 } => ({
   starters: {
     PG: { slotId: 'starter-pg', slotLabel: 'Base Titular', requiredPosition: 'PG', isStarter: true, player: null, role: 'CAPTAIN' },
-    SG: { slotId: 'starter-sg', slotLabel: 'Escolta Titular', requiredPosition: 'SG', isStarter: true, player: null, role: 'CO_CAPTAIN' },
-    SF: { slotId: 'starter-sf', slotLabel: 'Alero Titular', requiredPosition: 'SF', isStarter: true, player: null, role: 'DEFENSIVE' },
-    PF: { slotId: 'starter-pf', slotLabel: 'Ala-Pívot Titular', requiredPosition: 'PF', isStarter: true, player: null, role: 'ROTATION' },
-    C: { slotId: 'starter-c', slotLabel: 'Pívot Titular', requiredPosition: 'C', isStarter: true, player: null, role: 'DEFENSIVE' },
+    SG: { slotId: 'starter-sg', slotLabel: 'Escolta Titular', requiredPosition: 'SG', isStarter: true, player: null, role: 'NORMAL' },
+    SF: { slotId: 'starter-sf', slotLabel: 'Alero Titular', requiredPosition: 'SF', isStarter: true, player: null, role: 'NORMAL' },
+    PF: { slotId: 'starter-pf', slotLabel: 'Ala-Pívot Titular', requiredPosition: 'PF', isStarter: true, player: null, role: 'NORMAL' },
+    C: { slotId: 'starter-c', slotLabel: 'Pívot Titular', requiredPosition: 'C', isStarter: true, player: null, role: 'NORMAL' },
   },
+  // El back pide 5 suplentes: uno por posición
   bench: [
-    { slotId: 'bench-1', slotLabel: 'Sexto Hombre', isStarter: false, player: null, role: 'SIXTH_MAN' },
-    { slotId: 'bench-2', slotLabel: 'Rotación 1', isStarter: false, player: null, role: 'ROTATION' },
-    { slotId: 'bench-3', slotLabel: 'Suplente 2', isStarter: false, player: null, role: 'BENCH' },
-    { slotId: 'bench-4', slotLabel: 'Suplente Profundo', isStarter: false, player: null, role: 'DEEP_BENCH' },
+    { slotId: 'bench-pg', slotLabel: 'Base Suplente', requiredPosition: 'PG', isStarter: false, player: null, role: 'SIXTH_MAN' },
+    { slotId: 'bench-sg', slotLabel: 'Escolta Suplente', requiredPosition: 'SG', isStarter: false, player: null, role: 'NORMAL' },
+    { slotId: 'bench-sf', slotLabel: 'Alero Suplente', requiredPosition: 'SF', isStarter: false, player: null, role: 'NORMAL' },
+    { slotId: 'bench-pf', slotLabel: 'Ala-Pívot Suplente', requiredPosition: 'PF', isStarter: false, player: null, role: 'NORMAL' },
+    { slotId: 'bench-c', slotLabel: 'Pívot Suplente', requiredPosition: 'C', isStarter: false, player: null, role: 'NORMAL' },
   ],
   coach: { coach: null }
 });
@@ -89,6 +91,13 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     let isMounted = true;
     loadRoster(user?.uid).then((saved) => {
       if (!isMounted || !saved) return;
+      // Plantillas guardadas con el formato viejo (4 suplentes, 7 roles) se descartan
+      const formatoValido =
+        saved.bench?.length === 5 &&
+        [...Object.values(saved.starters ?? {}), ...saved.bench].every(
+          (slot) => ['CAPTAIN', 'SIXTH_MAN', 'NORMAL'].includes(slot.role)
+        );
+      if (!formatoValido) return;
       if (saved.starters) setStarters(saved.starters);
       if (saved.bench) setBench(saved.bench);
       if (saved.coach) setCoach(saved.coach);
@@ -131,14 +140,12 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     let total = 0;
     (Object.values(starters) as RosterSlot[]).forEach((slot) => {
       if (slot.player) {
-        const mult = TACTICAL_ROLES[slot.role].multiplier;
-        total += slot.player.avgVal * mult;
+        total += slot.player.avgVal * getRoleMultiplier(slot.role, true);
       }
     });
     bench.forEach((slot) => {
       if (slot.player) {
-        const mult = TACTICAL_ROLES[slot.role].multiplier;
-        total += slot.player.avgVal * mult;
+        total += slot.player.avgVal * getRoleMultiplier(slot.role, false);
       }
     });
     if (coach.coach) {
@@ -196,25 +203,24 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
       return;
     }
 
-    // Find first empty bench slot
-    const emptyIndex = bench.findIndex((slot) => slot.player === null);
-    if (emptyIndex === -1) {
-      showAlert("El banco de suplentes ya tiene 4 jugadores. Quita uno antes de agregar.");
-      return;
-    }
+    // Cada suplente va en el lugar de su posición (si estaba ocupado, lo reemplaza)
+    const slotIndex = bench.findIndex((slot) => slot.requiredPosition === player.position);
+    if (slotIndex === -1) return;
+    const currentSlot = bench[slotIndex];
 
-    if (spentBudget + player.price > TOTAL_BUDGET) {
+    const priceDiff = currentSlot.player ? player.price - currentSlot.player.price : player.price;
+    if (spentBudget + priceDiff > TOTAL_BUDGET) {
       showAlert(`Presupuesto insuficiente para fichar a ${player.name}.`);
     }
 
     const newBench = [...bench];
-    newBench[emptyIndex] = {
-      ...newBench[emptyIndex],
+    newBench[slotIndex] = {
+      ...currentSlot,
       player: player,
     };
     setBench(newBench);
 
-    showAlert(`${player.name} añadido al banco de suplentes.`);
+    showAlert(`${player.name} fichado como ${player.position} suplente.`);
   };
 
   // Select coach
@@ -256,22 +262,42 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
   };
 
   // Change tactical role of a slot
+  // El back exige 1 capitán (titular) y 1 sexto hombre (suplente):
+  // al elegir uno nuevo, el anterior pasa a normal.
   const handleChangeRole = (slotId: string, newRole: TacticalRoleId) => {
-    // Check starters
-    for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {
-      if (starters[key].slotId === slotId) {
-        setStarters((prev) => ({
-          ...prev,
-          [key]: { ...prev[key], role: newRole },
-        }));
-        return;
-      }
+    const starterSlots = Object.values(starters) as RosterSlot[];
+    const isStarter = starterSlots.some((slot) => slot.slotId === slotId);
+    const currentSlot = isStarter
+      ? starterSlots.find((slot) => slot.slotId === slotId)
+      : bench.find((slot) => slot.slotId === slotId);
+    if (!currentSlot) return;
+
+    if (currentSlot.role === 'CAPTAIN' && newRole !== 'CAPTAIN') {
+      showAlert("Tiene que haber un capitán. Elegí a otro titular como capitán.");
+      return;
+    }
+    if (currentSlot.role === 'SIXTH_MAN' && newRole !== 'SIXTH_MAN') {
+      showAlert("Tiene que haber un sexto hombre. Elegí a otro suplente como sexto hombre.");
+      return;
     }
 
-    // Check bench
-    setBench((prev) =>
-      prev.map((slot) => (slot.slotId === slotId ? { ...slot, role: newRole } : slot))
-    );
+    const actualizar = (slot: RosterSlot): RosterSlot => {
+      if (slot.slotId === slotId) return { ...slot, role: newRole };
+      if (slot.role === newRole && newRole !== 'NORMAL') return { ...slot, role: 'NORMAL' };
+      return slot;
+    };
+
+    if (isStarter) {
+      setStarters((prev) => ({
+        PG: actualizar(prev.PG),
+        SG: actualizar(prev.SG),
+        SF: actualizar(prev.SF),
+        PF: actualizar(prev.PF),
+        C: actualizar(prev.C),
+      }));
+    } else {
+      setBench((prev) => prev.map(actualizar));
+    }
   };
 
   // Open detail modal for player
@@ -482,24 +508,6 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
           selectedPlayerForDetail ? selectedPlayerIds.has(selectedPlayerForDetail.id) : false
         }
         currentRole={detailRole}
-        onChangeRole={(newRole) => {
-          if (selectedPlayerForDetail) {
-            // Find slot
-            for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {
-              if (starters[key].player?.id === selectedPlayerForDetail.id) {
-                handleChangeRole(starters[key].slotId, newRole);
-                setDetailRole(newRole);
-                return;
-              }
-            }
-            bench.forEach((b) => {
-              if (b.player?.id === selectedPlayerForDetail.id) {
-                handleChangeRole(b.slotId, newRole);
-                setDetailRole(newRole);
-              }
-            });
-          }
-        }}
         onRemove={() => {
           if (selectedPlayerForDetail) {
             for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {

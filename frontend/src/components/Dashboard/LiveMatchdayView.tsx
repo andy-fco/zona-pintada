@@ -13,7 +13,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { LNB_MATCHES_FECHA_18, LIVE_PLAY_BY_PLAY_TICKER } from "../../data/mockLeaguesAndMatches";
-import { TACTICAL_ROLES, TacticalRoleId, formatSalary, TeamRoster } from "../../types/basketball";
+import { TACTICAL_ROLES, TacticalRoleId, formatSalary, TeamRoster, getRoleMultiplier } from "../../types/basketball";
 
 interface LiveMatchdayViewProps {
   roster: TeamRoster | null;
@@ -39,7 +39,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
   let calculatedLivePoints = 0;
   startersList.forEach((slot) => {
     if (slot.player) {
-      const mult = TACTICAL_ROLES[slot.role]?.multiplier || 1.0;
+      const mult = getRoleMultiplier(slot.role, true);
       // Simulated live match performance (avgVal + random/fixed simulation factor)
       calculatedLivePoints += slot.player.avgVal * mult;
     }
@@ -47,7 +47,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
 
   benchList.forEach((slot) => {
     if (slot.player) {
-      const mult = TACTICAL_ROLES[slot.role]?.multiplier || 0.5;
+      const mult = getRoleMultiplier(slot.role, false);
       calculatedLivePoints += slot.player.avgVal * mult;
     }
   });
@@ -156,8 +156,9 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {startersList.map((slot) => {
                     if (!slot.player) return null;
-                    const roleInfo = TACTICAL_ROLES[slot.role];
-                    const liveVal = (slot.player.avgVal * roleInfo.multiplier).toFixed(1);
+                    const roleInfo = TACTICAL_ROLES[slot.role] ?? TACTICAL_ROLES.NORMAL;
+                    const mult = getRoleMultiplier(slot.role, true);
+                    const liveVal = (slot.player.avgVal * mult).toFixed(1);
 
                     return (
                       <div 
@@ -176,7 +177,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                             <div className="text-[10px] text-white/50 flex items-center gap-1.5 mt-0.5">
                               <span>{slot.player.teamShort}</span>
                               <span>•</span>
-                              <span className="text-[#FF5C00] font-black">{roleInfo.label} ({roleInfo.multiplier}x)</span>
+                              <span className="text-[#FF5C00] font-black">{roleInfo.name} ({mult}x)</span>
                             </div>
                           </div>
                         </div>
@@ -199,8 +200,9 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {benchList.map((slot) => {
                     if (!slot.player) return null;
-                    const roleInfo = TACTICAL_ROLES[slot.role];
-                    const liveVal = (slot.player.avgVal * roleInfo.multiplier).toFixed(1);
+                    const roleInfo = TACTICAL_ROLES[slot.role] ?? TACTICAL_ROLES.NORMAL;
+                    const mult = getRoleMultiplier(slot.role, false);
+                    const liveVal = (slot.player.avgVal * mult).toFixed(1);
 
                     return (
                       <div 
@@ -216,7 +218,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                               {slot.player.name}
                             </div>
                             <div className="text-[9px] text-white/40">
-                              {roleInfo.label} ({roleInfo.multiplier}x)
+                              {roleInfo.name} ({mult}x)
                             </div>
                           </div>
                         </div>
