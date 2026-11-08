@@ -1,6 +1,8 @@
 import React from "react";
+import { useDatosLnb } from "../context/DatosLnbContext";
 
 export const Footer: React.FC = () => {
+  const { temporada } = useDatosLnb();
   return (
     <footer className="border-t border-white/10 bg-[#0B0B0B] py-12 px-4 sm:px-6 lg:px-8 text-white/50 text-xs">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
@@ -24,11 +26,11 @@ export const Footer: React.FC = () => {
           <span className="text-white/20">•</span>
           <span>0.50x - 1.20x Multiplicadores</span>
           <span className="text-white/20">•</span>
-          <span className="text-[#FF5C00]">Temporada Regular 2024/25</span>
+          <span className="text-[#FF5C00]">Temporada Regular {temporada}</span>
         </div>
 
         <div className="text-center md:text-right text-white/30 text-[10px] uppercase tracking-widest font-bold">
-          Temporada 2024/25 • Prototipo Oficial
+          Temporada {temporada} • Prototipo Oficial
         </div>
 
       </div>

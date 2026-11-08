@@ -35,7 +35,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   onOpenSearch 
 }) => {
   const { user } = useAuth();
-  const { temporada } = useDatosLnb();
+  const { temporada, numeroFecha } = useDatosLnb();
   const [savedRoster, setSavedRoster] = useState<TeamRoster | null>(null);
 
   // Load saved roster from Cloud Firestore with local fallback
@@ -107,7 +107,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FF5C00]/10 border border-[#FF5C00]/20 text-[#FF5C00] text-xs font-bold uppercase rounded-full mb-3">
                   <CheckCircle2 className="w-4 h-4 text-[#FF5C00]" />
-                  <span>Franquicia: {savedRoster?.teamName || "Mi Franquicia LNB"} • Fecha 18</span>
+                  <span>Franquicia: {savedRoster?.teamName || "Mi Franquicia LNB"} • Fecha {numeroFecha}</span>
                 </div>
                 <h1 className="text-3xl sm:text-5xl font-black italic uppercase text-white tracking-tight leading-tight">
                   {savedRoster?.teamName ? savedRoster.teamName : "Tu Equipo Está Listo para Competir"}
@@ -172,7 +172,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               <div className="space-y-1">
                 <span className="text-xs text-white/40 font-medium block">Próximo Salto</span>
                 <div className="text-xl sm:text-2xl font-black italic text-white">
-                  Fecha 18
+                  Fecha {numeroFecha}
                 </div>
                 <span className="text-xs text-white/40 block">Viernes 20:00 hs</span>
               </div>
@@ -417,7 +417,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           </div>
           
           <h2 className="text-4xl sm:text-6xl font-black italic uppercase text-white tracking-tight">
-            La Jornada 18 Arranca Pronto
+            La Fecha {numeroFecha} Arranca Pronto
           </h2>
 
           <p className="text-sm sm:text-base text-white/50 max-w-lg mx-auto">

@@ -1,10 +1,9 @@
 import React from "react";
 import { Calendar, MapPin, Tv, Clock, Radio, Shield, CheckCircle2 } from "lucide-react";
-import { LNB_MATCHES_FECHA_18 } from "../../data/mockLeaguesAndMatches";
 import { useDatosLnb } from "../../context/DatosLnbContext";
 
 export const FixtureView: React.FC = () => {
-  const { temporada } = useDatosLnb();
+  const { temporada, partidos, numeroFecha } = useDatosLnb();
   return (
     <div className="space-y-8">
       
@@ -20,7 +19,7 @@ export const FixtureView: React.FC = () => {
             </span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-black italic uppercase tracking-tight text-white">
-            Fixture & Televisación • Fecha 18
+            Fixture & Televisación • Fecha {numeroFecha}
           </h2>
           <p className="text-xs sm:text-sm text-white/50 uppercase tracking-wider font-semibold mt-1">
             Horarios, estadios y transmisiones oficiales para seguir el rendimiento de tus jugadores
@@ -36,8 +35,13 @@ export const FixtureView: React.FC = () => {
       </div>
 
       {/* Matches Grid */}
+      {partidos.length === 0 && (
+        <div className="p-8 bg-[#111111] border border-white/10 text-center text-sm text-white/50">
+          Todavía no hay partidos cargados para esta fecha.
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {LNB_MATCHES_FECHA_18.map((match) => {
+        {partidos.map((match) => {
           const isLive = match.status === 'live';
           const isFinished = match.status === 'finished';
 
@@ -108,8 +112,12 @@ export const FixtureView: React.FC = () => {
               {/* Broadcast & Highlight */}
               <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[10px] text-white/40">
                 <div className="flex items-center gap-1.5">
-                  <Tv className="w-3 h-3 text-white/60" />
-                  <span>{match.tv}</span>
+                  {match.tv && (
+                    <>
+                      <Tv className="w-3 h-3 text-white/60" />
+                      <span>{match.tv}</span>
+                    </>
+                  )}
                 </div>
 
                 {match.topPerformer && (

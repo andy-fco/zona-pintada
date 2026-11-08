@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Flame, 
   Trophy, 
@@ -12,7 +12,10 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react";
-import { LNB_MATCHES_FECHA_18, LIVE_PLAY_BY_PLAY_TICKER } from "../../data/mockLeaguesAndMatches";
+import { LIVE_PLAY_BY_PLAY_TICKER } from "../../data/mockLeaguesAndMatches";
+import { useDatosLnb } from "../../context/DatosLnbContext";
+import { getPuntosSemana } from "../../api/equipoFantasyApi";
+import { getMiPosicionSemanal } from "../../api/rankingApi";
 import { TACTICAL_ROLES, TacticalRoleId, formatSalary, TeamRoster, getRoleMultiplier } from "../../types/basketball";
 
 interface LiveMatchdayViewProps {
@@ -21,7 +24,39 @@ interface LiveMatchdayViewProps {
 }
 
 export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGoToTeamBuilder }) => {
+  const { numeroFecha, semanaActualId, partidos, usandoDatosDePrueba } = useDatosLnb();
   const [selectedMatchFilter, setSelectedMatchFilter] = useState<string>("all");
+
+  // Puntos reales de la semana en curso (los calcula el back con los multiplicadores)
+  const [puntosReales, setPuntosReales] = useState<{
+    total: number;
+    porJugador: Map<number, number>;
+    dt: number;
+    posicion: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!semanaActualId || !roster) {
+      setPuntosReales(null);
+      return;
+    }
+    Promise.all([getPuntosSemana(semanaActualId), getMiPosicionSemanal(semanaActualId)])
+      .then(([puntos, posicion]) =>
+        setPuntosReales({
+          total: puntos.puntosEquipo,
+          porJugador: new Map(puntos.jugadores.map((j) => [j.id, Number(j.puntosSemana)])),
+          dt: Number(puntos.dt?.puntosSemana ?? 0),
+          posicion,
+        })
+      )
+      .catch(() => setPuntosReales(null));
+  }, [semanaActualId, roster]);
+
+  // Puntos de un jugador: reales si hay, si no la proyección con su promedio
+  const puntosDe = (player: { id: string; avgVal: number }, mult: number) =>
+    puntosReales
+      ? (puntosReales.porJugador.get(Number(player.id)) ?? 0).toFixed(1)
+      : (player.avgVal * mult).toFixed(1);
 
   // Fallback demo players if user hasn't finished setting up their roster
   const startersList = roster?.starters ? [
@@ -57,7 +92,9 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
     calculatedLivePoints += coachData.winBonusHome;
   }
 
-  const roundedLivePoints = calculatedLivePoints > 0 ? calculatedLivePoints.toFixed(1) : "92.5";
+  const roundedLivePoints = puntosReales
+    ? puntosReales.total.toFixed(1)
+    : calculatedLivePoints > 0 ? calculatedLivePoints.toFixed(1) : "92.5";
 
   return (
     <div className="space-y-8">
@@ -69,7 +106,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
             <div className="flex items-center gap-2 mb-2">
               <span className="flex items-center gap-1.5 px-2.5 py-0.5 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest animate-pulse">
                 <Radio className="w-3 h-3" />
-                EN VIVO • JORNADA 18
+                EN VIVO • FECHA {numeroFecha}
               </span>
               <span className="text-white/40 text-xs font-mono">
                 Actualizado hace 30 segundos
@@ -92,7 +129,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                 {roundedLivePoints} <span className="text-lg text-[#FF5C00]">PTS</span>
               </div>
               <span className="text-[11px] text-white/40">
-                Puesto parcial en LNB: <strong className="text-white">#142</strong>
+                Puesto parcial en LNB: <strong className="text-white">{puntosReales ? (puntosReales.posicion ? `#${puntosReales.posicion}` : "-") : "#142"}</strong>
               </span>
             </div>
 
@@ -133,7 +170,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
               </div>
               <div>
                 <h4 className="text-lg font-black italic uppercase text-white">
-                  Aún no armaste tu quinteto para la Fecha 18
+                  Aún no armaste tu quinteto para la Fecha {numeroFecha}
                 </h4>
                 <p className="text-xs text-white/50 max-w-md mx-auto mt-1">
                   Tenés $110.000.000 disponibles. Elegí a tus 5 titulares, 4 suplentes y entrenador para sumar puntos.
@@ -158,7 +195,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                     if (!slot.player) return null;
                     const roleInfo = TACTICAL_ROLES[slot.role] ?? TACTICAL_ROLES.NORMAL;
                     const mult = getRoleMultiplier(slot.role, true);
-                    const liveVal = (slot.player.avgVal * mult).toFixed(1);
+                    const liveVal = puntosDe(slot.player, mult);
 
                     return (
                       <div 
@@ -202,7 +239,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                     if (!slot.player) return null;
                     const roleInfo = TACTICAL_ROLES[slot.role] ?? TACTICAL_ROLES.NORMAL;
                     const mult = getRoleMultiplier(slot.role, false);
-                    const liveVal = (slot.player.avgVal * mult).toFixed(1);
+                    const liveVal = puntosDe(slot.player, mult);
 
                     return (
                       <div 
@@ -245,7 +282,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-base font-black italic text-[#FF5C00] font-mono">+{coachData.winBonusHome}.0</span>
+                        <span className="text-base font-black italic text-[#FF5C00] font-mono">+{puntosReales ? puntosReales.dt.toFixed(1) : `${coachData.winBonusHome}.0`}</span>
                       </div>
                     </div>
                   )}
@@ -271,7 +308,12 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
 
           {/* Live Games Widget */}
           <div className="space-y-3">
-            {LNB_MATCHES_FECHA_18.slice(0, 3).map((match) => (
+            {partidos.length === 0 && (
+              <div className="p-4 bg-[#111111] border border-white/10 text-xs text-white/50">
+                Todavía no hay partidos cargados para esta fecha.
+              </div>
+            )}
+            {partidos.slice(0, 3).map((match) => (
               <div 
                 key={match.id}
                 className="p-4 bg-[#111111] border border-white/10 space-y-2.5"
@@ -290,11 +332,11 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
                 </div>
 
                 <div className="flex items-center justify-between text-sm font-black italic uppercase">
-                  <span className="text-white">{match.homeTeam.split(" ")[0]}</span>
+                  <span className="text-white">{usandoDatosDePrueba ? match.homeTeam.split(" ")[0] : match.homeTeam}</span>
                   <span className="font-mono text-lg text-[#FF5C00]">
-                    {match.homeScore} - {match.awayScore}
+                    {match.status === "upcoming" ? "VS" : `${match.homeScore} - ${match.awayScore}`}
                   </span>
-                  <span className="text-white">{match.awayTeam.split(" ")[0]}</span>
+                  <span className="text-white">{usandoDatosDePrueba ? match.awayTeam.split(" ")[0] : match.awayTeam}</span>
                 </div>
 
                 {match.topPerformer && (
@@ -307,7 +349,8 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
             ))}
           </div>
 
-          {/* Play by Play Events */}
+          {/* Play by Play Events (el back no tiene jugadas: solo con datos de prueba) */}
+          {usandoDatosDePrueba && (
           <div className="p-5 bg-black/60 border border-white/10 space-y-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-[#FF5C00] block mb-2">
               Jugadas Clave en Vivo
@@ -326,6 +369,7 @@ export const LiveMatchdayView: React.FC<LiveMatchdayViewProps> = ({ roster, onGo
               ))}
             </div>
           </div>
+          )}
 
         </div>
 

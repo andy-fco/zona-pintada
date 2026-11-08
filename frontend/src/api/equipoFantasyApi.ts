@@ -201,3 +201,30 @@ export async function updateFranchiseName(
     return { success: false, cloudSynced: false };
   }
 }
+
+// ---------- Puntos de la semana ----------
+
+export interface IntegranteSemanaResponse {
+  id: number;
+  nombre: string;
+  apellido: string;
+  posicion: string;
+  equipoNombre: string;
+  titular: boolean | null;
+  rol: string | null;
+  multiplicador: number | null;
+  puntosSemana: number;
+}
+
+export interface PuntosSemanaEquipoResponse {
+  semanaId: number;
+  numeroSemana: number;
+  cerrada: boolean;
+  puntosEquipo: number;
+  jugadores: IntegranteSemanaResponse[];
+  dt: IntegranteSemanaResponse | null;
+}
+
+/** Puntos del equipo del usuario logueado en una semana (ya con multiplicadores). */
+export const getPuntosSemana = (semanaId: number) =>
+  api<PuntosSemanaEquipoResponse>(`/equipos-fantasy/me/semanas/${semanaId}`);
