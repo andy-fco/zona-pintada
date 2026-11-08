@@ -66,16 +66,19 @@ export const toEquipoLnb = (e: EquipoResponse): EquipoLnb => ({
   city: e.ciudad,
 });
 
+// Convierte la posición del back ("base", "ala-pivot", "BASE"...) al código del front
+export const toPlayerPosition = (posicion: string): PlayerPosition =>
+  POSICIONES[posicion.toUpperCase().replace("-", "_")] ?? "SF";
+
 export function toBasketballPlayer(j: JugadorResponse, equipos: EquipoResponse[]): BasketballPlayer {
   const equipo = equipos.find((e) => e.id === j.equipoId);
-  const posicion = j.posicion.toUpperCase().replace("-", "_");
   return {
     id: String(j.id),
     name: `${j.nombre} ${j.apellido}`,
     number: 0,
     team: j.equipoNombre,
     teamShort: equipo?.nombreCorto ?? "",
-    position: POSICIONES[posicion] ?? "SF",
+    position: toPlayerPosition(j.posicion),
     price: Number(j.valor) * 1_000_000,
     height: j.altura ? `${j.altura}m` : "-",
     avgVal: 0,

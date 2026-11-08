@@ -16,7 +16,7 @@ import { CourtView } from "./CourtView";
 import { PlayerMarketList } from "./PlayerMarketList";
 import { RosterSummaryBar } from "./RosterSummaryBar";
 import { PlayerDetailModal } from "./PlayerDetailModal";
-import { saveRoster, loadRoster, updateFranchiseName } from "../../lib/rosterService";
+import { saveRoster, loadRoster, updateFranchiseName } from "../../api/equipoFantasyApi";
 import { generateBudgetCompliantTeam } from "../../utils/teamSuggester";
 import { useDatosLnb } from "../../context/DatosLnbContext";
 import { 
@@ -83,14 +83,19 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
+  // El back deja crear el equipo una sola vez por temporada:
+  // una vez creado, el plantel queda fijo (solo se puede cambiar el nombre)
+  const [equipoConfirmado, setEquipoConfirmado] = useState(false);
+
   // Position filter to pre-activate when user clicks an empty slot in Court View
   const [marketPositionFilter, setMarketPositionFilter] = useState<PlayerPosition | 'ALL' | 'COACH'>('ALL');
 
-  // Load saved lineup with Cloud Firestore and local fallback on mount
+  // Carga el equipo guardado en el back (si el usuario ya lo creó)
   useEffect(() => {
     let isMounted = true;
     loadRoster(user?.uid).then((saved) => {
       if (!isMounted || !saved) return;
+      setEquipoConfirmado(true);
       // Plantillas guardadas con el formato viejo (4 suplentes, 7 roles) se descartan
       const formatoValido =
         saved.bench?.length === 5 &&
@@ -168,6 +173,15 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     }, 3500);
   };
 
+  // Si el equipo ya está creado en el back, avisa y bloquea cambios en el plantel
+  const plantelBloqueado = () => {
+    if (equipoConfirmado) {
+      showAlert("Tu equipo ya está confirmado para esta temporada. Solo podés cambiarle el nombre.");
+      return true;
+    }
+    return false;
+  };
+
   // Add a player as a starter
   const handleSelectStarter = (player: BasketballPlayer) => {
     // Check if already in roster
@@ -175,6 +189,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
       showAlert(`${player.name} ya está en tu plantilla.`);
       return;
     }
+    if (plantelBloqueado()) return;
 
     const pos = player.position;
     const currentSlot = starters[pos];
@@ -202,6 +217,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
       showAlert(`${player.name} ya está en tu plantilla.`);
       return;
     }
+    if (plantelBloqueado()) return;
 
     // Cada suplente va en el lugar de su posición (si estaba ocupado, lo reemplaza)
     const slotIndex = bench.findIndex((slot) => slot.requiredPosition === player.position);
@@ -225,6 +241,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Select coach
   const handleSelectCoach = (selectedCoach: BasketballCoach) => {
+    if (plantelBloqueado()) return;
     const priceDiff = coach.coach ? selectedCoach.price - coach.coach.price : selectedCoach.price;
     if (spentBudget + priceDiff > TOTAL_BUDGET) {
       showAlert(`Presupuesto insuficiente para contratar a ${selectedCoach.name}.`);
@@ -236,6 +253,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Remove player from slot
   const handleRemovePlayer = (slotId: string) => {
+    if (plantelBloqueado()) return;
     // Check if starter
     for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {
       if (starters[key].slotId === slotId) {
@@ -257,6 +275,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Remove coach
   const handleRemoveCoach = () => {
+    if (plantelBloqueado()) return;
     setCoach({ coach: null });
     showAlert("Entrenador desvinculado.");
   };
@@ -265,6 +284,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
   // El back exige 1 capitán (titular) y 1 sexto hombre (suplente):
   // al elegir uno nuevo, el anterior pasa a normal.
   const handleChangeRole = (slotId: string, newRole: TacticalRoleId) => {
+    if (plantelBloqueado()) return;
     const starterSlots = Object.values(starters) as RosterSlot[];
     const isStarter = starterSlots.some((slot) => slot.slotId === slotId);
     const currentSlot = isStarter
@@ -329,6 +349,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Autocomplete: Intelligently pick an optimal, balanced team strictly within $110M
   const handleAutoComplete = () => {
+    if (plantelBloqueado()) return;
     const suggested = generateBudgetCompliantTeam(jugadores, dts);
     setStarters(suggested.starters);
     setBench(suggested.bench);
@@ -340,13 +361,14 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Clear entire roster
   const handleClearRoster = () => {
+    if (plantelBloqueado()) return;
     setStarters(DEFAULT_INITIAL_ROSTER().starters);
     setBench(DEFAULT_INITIAL_ROSTER().bench);
     setCoach({ coach: null });
     showAlert("Plantilla vaciada por completo.");
   };
 
-  // Save roster to Cloud Firestore and local cache
+  // Guarda el equipo en el back: lo crea la primera vez; después solo actualiza el nombre
   const handleSaveRoster = async () => {
     if (spentBudget > TOTAL_BUDGET) {
       showAlert("No podés guardar un equipo que excede el tope de $110M.");
@@ -354,6 +376,12 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     }
 
     try {
+      if (equipoConfirmado) {
+        const result = await updateFranchiseName(user?.uid, teamName);
+        showAlert(result.success ? "Nombre del equipo actualizado." : "No se pudo actualizar el nombre.");
+        return;
+      }
+
       const rosterData: TeamRoster = {
         teamName,
         starters,
@@ -361,19 +389,15 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
         coach,
         totalBudget: TOTAL_BUDGET,
       };
-      
-      const result = await saveRoster(user?.uid, rosterData, user?.displayName || user?.email?.split('@')[0]);
-      await updateFranchiseName(user?.uid, rosterData.teamName);
+
+      await saveRoster(user?.uid, rosterData, user?.displayName);
+      setEquipoConfirmado(true);
       setIsSavedSuccess(true);
-      if (result.cloudSynced) {
-        showAlert("¡Plantilla oficial guardada y sincronizada en la nube!");
-      } else {
-        showAlert("¡Plantilla oficial guardada con éxito!");
-      }
+      showAlert("¡Equipo creado! Quedó confirmado para toda la temporada.");
       setTimeout(() => setIsSavedSuccess(false), 3000);
     } catch (e) {
       console.error(e);
-      showAlert("Error al guardar la plantilla.");
+      showAlert(e instanceof Error ? e.message : "Error al guardar la plantilla.");
     }
   };
 
@@ -423,6 +447,12 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
             <p className="text-xs sm:text-sm text-white/50 uppercase tracking-wider font-semibold mt-1">
               Definí tu quinteto titular, suplentes y DT oficial con sus roles tácticos
             </p>
+            {equipoConfirmado && (
+              <p className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FF5C00]/10 border border-[#FF5C00]/30 text-[#FF5C00] text-[11px] font-bold uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Equipo confirmado para la temporada
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

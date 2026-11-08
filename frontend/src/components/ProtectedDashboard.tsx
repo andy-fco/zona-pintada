@@ -29,7 +29,7 @@ import { LiveMatchdayView } from "./Dashboard/LiveMatchdayView";
 import { PrivateLeaguesView } from "./Dashboard/PrivateLeaguesView";
 import { GlobalRankingsView } from "./Dashboard/GlobalRankingsView";
 import { FixtureView } from "./Dashboard/FixtureView";
-import { loadRoster, updateFranchiseName } from "../lib/rosterService";
+import { loadRoster, updateFranchiseName } from "../api/equipoFantasyApi";
 
 interface ProtectedDashboardProps {
   onBackToLanding: () => void;

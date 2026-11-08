@@ -19,7 +19,7 @@ import {
 import { TeamRoster, RosterSlot, formatSalary, TACTICAL_ROLES, getRoleMultiplier } from "../types/basketball";
 import { TOTAL_BUDGET } from "../data/lnbData";
 import { OfficialLnbHub } from "./Home/OfficialLnbHub";
-import { loadRoster } from "../lib/rosterService";
+import { loadRoster } from "../api/equipoFantasyApi";
 
 interface LandingHomeProps {
   onOpenAuth: (mode: "login" | "signup") => void;
