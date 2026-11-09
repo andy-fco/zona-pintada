@@ -44,7 +44,7 @@ export const Campo: React.FC<{ etiqueta: string; children: React.ReactNode; clas
   className = "",
 }) => (
   <label className={`block space-y-1 ${className}`}>
-    <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">{etiqueta}</span>
+    <span className="block text-[10px] font-bold uppercase tracking-wider text-white/40">{etiqueta}</span>
     {children}
   </label>
 );

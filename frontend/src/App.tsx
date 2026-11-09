@@ -9,8 +9,9 @@ import { AuthModal } from "./components/AuthModal";
 import { GlobalSearchModal } from "./components/Discovery/GlobalSearchModal";
 import { Footer } from "./components/Footer";
 import { AdminPanel } from "./components/Admin/AdminPanel";
+import { MiCuenta } from "./components/MiCuenta";
 
-export type AppView = "landing" | "builder" | "dashboard" | "admin";
+export type AppView = "landing" | "builder" | "dashboard" | "admin" | "cuenta";
 
 function MainContent() {
   const { user, loading } = useAuth();
@@ -23,8 +24,10 @@ function MainContent() {
       setCurrentView("admin");
     } else if (!esAdmin && currentView === "admin") {
       setCurrentView("landing");
+    } else if (!user && currentView === "cuenta") {
+      setCurrentView("landing");
     }
-  }, [esAdmin, currentView]);
+  }, [esAdmin, user, currentView]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -92,7 +95,9 @@ function MainContent() {
 
       {/* Main View Area */}
       <main className="flex-1">
-        {currentView === "admin" && esAdmin ? (
+        {currentView === "cuenta" && user ? (
+          <MiCuenta onCuentaEliminada={() => setCurrentView("landing")} />
+        ) : currentView === "admin" && esAdmin ? (
           <AdminPanel />
         ) : currentView === "builder" ? (
           <TeamBuilder onGoToDashboard={handleGoToDashboard} />

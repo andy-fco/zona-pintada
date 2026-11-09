@@ -142,6 +142,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                id="btn-mi-cuenta"
+                onClick={() => setCurrentView("cuenta")}
+                title="Mi cuenta"
+                className={`flex items-center gap-1 p-2 text-xs rounded-lg transition-colors cursor-pointer ${
+                  currentView === "cuenta"
+                    ? "text-[#FF5C00] bg-[#FF5C00]/10"
+                    : "text-white/40 hover:text-[#FF5C00] hover:bg-white/5"
+                }`}
+              >
+                <UserIcon className="w-4 h-4" />
+              </button>
+
+              <button
                 id="btn-logout"
                 onClick={() => signOut()}
                 title="Cerrar Sesión"
