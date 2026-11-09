@@ -92,9 +92,9 @@ export const RosterSummaryBar: React.FC<RosterSummaryBarProps> = ({
               FICHAS
             </span>
             <span className={`text-base sm:text-lg font-black italic font-mono ${
-              totalPlayersCount === 10 ? "text-[#FF5C00]" : "text-white"
+              totalPlayersCount === 11 ? "text-[#FF5C00]" : "text-white"
             }`}>
-              {totalPlayersCount}/10
+              {totalPlayersCount}/11
             </span>
             <span className="text-[9px] text-white/40 font-mono hidden sm:block">
               {starterCount}T • {benchCount}S • {hasCoach ? "1DT" : "0DT"}

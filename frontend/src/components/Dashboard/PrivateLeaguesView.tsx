@@ -153,6 +153,11 @@ export const PrivateLeaguesView: React.FC<PrivateLeaguesViewProps> = ({ franchis
         </div>
       )}
 
+      {/* Aviso: las ligas todavía no están en el back */}
+      <div className="px-4 py-3 bg-[#FF5C00]/10 border border-[#FF5C00]/30 rounded-xl text-xs text-[#FF5C00] font-semibold">
+        Próximamente: las ligas privadas todavía no están disponibles. Lo que ves es una demostración y no se guarda.
+      </div>
+
       {/* Top Banner with Action Buttons */}
       <div className="p-6 bg-[#121212] border border-white/10 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>

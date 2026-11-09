@@ -2,7 +2,8 @@ import React from "react";
 import { 
   RosterSlot, 
   TacticalRoleId, 
-  TACTICAL_ROLES 
+  TACTICAL_ROLES,
+  getRoleMultiplier
 } from "../../types/basketball";
 import { 
   Check, 
@@ -29,15 +30,10 @@ export const TacticalRoleModal: React.FC<TacticalRoleModalProps> = ({
   const player = slot.player;
   const currentRole = slot.role;
 
-  const roleKeys: TacticalRoleId[] = [
-    'CAPTAIN',
-    'CO_CAPTAIN',
-    'SIXTH_MAN',
-    'DEFENSIVE',
-    'ROTATION',
-    'BENCH',
-    'DEEP_BENCH'
-  ];
+  // Titulares pueden ser capitán o normal; suplentes, sexto hombre o normal
+  const roleKeys: TacticalRoleId[] = slot.isStarter
+    ? ['CAPTAIN', 'NORMAL']
+    : ['SIXTH_MAN', 'NORMAL'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
@@ -81,7 +77,7 @@ export const TacticalRoleModal: React.FC<TacticalRoleModalProps> = ({
         <div className="px-6 py-3 bg-[#FF5C00]/5 border-b border-[#FF5C00]/10 flex items-center gap-2 text-xs text-white/70">
           <Info className="w-4 h-4 text-[#FF5C00] shrink-0" />
           <span>
-            El <strong>multiplicador táctico</strong> potencia los puntos fantasy obtenidos por el jugador según su rendimiento real en la fecha oficial de la LNB.
+            Tiene que haber <strong>un capitán</strong> entre los titulares y <strong>un sexto hombre</strong> entre los suplentes. Al elegir uno nuevo, el anterior pasa a normal.
           </span>
         </div>
 
@@ -132,7 +128,7 @@ export const TacticalRoleModal: React.FC<TacticalRoleModalProps> = ({
                       ? "bg-[#FF5C00] text-black shadow-md shadow-orange-500/30" 
                       : "bg-white/10 text-white group-hover:bg-white/15"
                   }`}>
-                    {role.multiplier.toFixed(2)}x
+                    {getRoleMultiplier(key, slot.isStarter).toFixed(2)}x
                   </div>
                   
                   <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${

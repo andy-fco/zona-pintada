@@ -2,6 +2,7 @@ import React from "react";
 import { BasketballPlayer, BasketballCoach, formatSalary, TACTICAL_ROLES, TacticalRoleId } from "../../types/basketball";
 import { X, Trophy, TrendingUp, Calendar, Shield, Activity, Award, UserCheck, Flame } from "lucide-react";
 import { TacticalRoleIcon } from "./TacticalRoleIcon";
+import { useEstadisticasJugador } from "../../hooks/useEstadisticasJugador";
 
 interface PlayerDetailModalProps {
   player: BasketballPlayer | null;
@@ -18,7 +19,7 @@ interface PlayerDetailModalProps {
 }
 
 export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
-  player,
+  player: jugadorBase,
   coach,
   isOpen,
   onClose,
@@ -30,6 +31,9 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
   onChangeRole,
   onRemove
 }) => {
+  // Le suma al jugador sus estadísticas reales del back (si las hay)
+  const player = useEstadisticasJugador(jugadorBase, isOpen);
+
   if (!isOpen || (!player && !coach)) return null;
 
   return (

@@ -9,13 +9,14 @@ import {
   UsuarioResponse,
 } from "../api/authApi";
 import { getToken } from "../api/client";
-import { syncUserProfile } from "../lib/rosterService";
 
 export interface AppUser {
   uid: string;
   displayName: string;
   email: string;
   rol: RolUsuario;
+  nombre: string;
+  apellido: string;
 }
 
 export interface AuthContextType {
@@ -26,6 +27,8 @@ export interface AuthContextType {
   signUp: (datos: RegistroRequest) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  // Actualiza los datos del usuario en pantalla (por ejemplo, después de editar el perfil)
+  setUsuarioActual: (u: UsuarioResponse) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +39,8 @@ const toAppUser = (u: UsuarioResponse): AppUser => ({
   displayName: u.usuario,
   email: u.mail,
   rol: u.rol,
+  nombre: u.nombre,
+  apellido: u.apellido,
 });
 
 function mensajeDeError(err: unknown): string {
@@ -71,7 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await login(identificador, pass);
       const appUser = toAppUser(await obtenerUsuarioActual());
       setUser(appUser);
-      syncUserProfile({ uid: appUser.uid, email: appUser.email, displayName: appUser.displayName });
     } catch (err) {
       const message = mensajeDeError(err);
       setError(message);
@@ -97,7 +101,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, signIn, signUp, signOut, clearError }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        signIn,
+        signUp,
+        signOut,
+        clearError,
+        setUsuarioActual: (u: UsuarioResponse) => setUser(toAppUser(u)),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

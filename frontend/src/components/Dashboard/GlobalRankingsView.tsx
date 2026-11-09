@@ -12,7 +12,7 @@ import {
   RefreshCw,
   UserCheck
 } from "lucide-react";
-import { fetchRealUsersAndFranchises, RealRankingUser } from "../../lib/rosterService";
+import { fetchRealUsersAndFranchises, RealRankingUser } from "../../api/rankingApi";
 import { useAuth } from "../../context/AuthContext";
 
 interface GlobalRankingsViewProps {

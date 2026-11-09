@@ -11,11 +11,6 @@ import {
   ChevronRight,
   Users
 } from "lucide-react";
-import { 
-  LNB_OFFICIAL_STANDINGS, 
-  LNB_STAT_LEADERS 
-} from "../../data/lnbStandingsData";
-import { LNB_MATCHES_FECHA_18 } from "../../data/mockLeaguesAndMatches";
 import { useDatosLnb } from "../../context/DatosLnbContext";
 
 interface OfficialLnbHubProps {
@@ -23,17 +18,18 @@ interface OfficialLnbHubProps {
 }
 
 export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) => {
-  const { temporada } = useDatosLnb();
+  const { temporada, posiciones, lideres, partidos, numeroFecha, usandoDatosDePrueba } = useDatosLnb();
   const [standingFilter, setStandingFilter] = useState<"all" | "norte" | "sur">("all");
   const [activeStatCategory, setActiveStatCategory] = useState<number>(0);
 
-  const filteredStandings = LNB_OFFICIAL_STANDINGS.filter((team) => {
+  const filteredStandings = posiciones.filter((team) => {
     if (standingFilter === "norte") return team.conference === "Norte";
     if (standingFilter === "sur") return team.conference === "Sur";
     return true;
   });
 
-  const currentStatCategory = LNB_STAT_LEADERS[activeStatCategory];
+  // Si cambia la lista de categorías, se vuelve a la primera
+  const currentStatCategory = lideres[activeStatCategory] ?? lideres[0];
 
   return (
     <div className="space-y-16 py-12">
@@ -54,7 +50,8 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
             </p>
           </div>
 
-          {/* Conference Filter Pills */}
+          {/* Conference Filter Pills (el back no tiene conferencias: solo con datos de prueba) */}
+          {usandoDatosDePrueba && (
           <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/10 rounded-xl shrink-0">
             <button
               onClick={() => setStandingFilter("all")}
@@ -87,6 +84,7 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
               Sur
             </button>
           </div>
+          )}
         </div>
 
         {/* Clean, Rounded Table */}
@@ -202,7 +200,7 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
 
           {/* Category Tabs */}
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white/[0.04] border border-white/10 rounded-xl shrink-0">
-            {LNB_STAT_LEADERS.map((cat, idx) => (
+            {lideres.map((cat, idx) => (
               <button
                 key={cat.category}
                 onClick={() => setActiveStatCategory(idx)}
@@ -220,7 +218,12 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
 
         {/* 4 Leaders Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {currentStatCategory.leaders.map((leader) => {
+          {(!currentStatCategory || currentStatCategory.leaders.length === 0) && (
+            <div className="col-span-full p-8 bg-[#121212] border border-white/10 rounded-2xl text-center text-sm text-white/50">
+              Todavía no hay estadísticas cargadas para esta fecha.
+            </div>
+          )}
+          {currentStatCategory?.leaders.map((leader) => {
             const isFirst = leader.rank === 1;
 
             return (
@@ -272,7 +275,7 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FF5C00]/10 border border-[#FF5C00]/20 text-[#FF5C00] text-xs font-bold uppercase rounded-full mb-2">
               <Calendar className="w-3.5 h-3.5" />
-              <span>Fecha 18</span>
+              <span>Fecha {numeroFecha}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black italic uppercase text-white tracking-tight">
               Partidos de la Jornada
@@ -285,27 +288,38 @@ export const OfficialLnbHub: React.FC<OfficialLnbHubProps> = ({ onOpenSearch }) 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {LNB_MATCHES_FECHA_18.slice(0, 3).map((match) => (
+          {partidos.length === 0 && (
+            <div className="col-span-full p-8 bg-[#121212] border border-white/10 rounded-2xl text-center text-sm text-white/50">
+              Todavía no hay partidos cargados para esta fecha.
+            </div>
+          )}
+          {partidos.slice(0, 3).map((match) => (
             <div 
               key={match.id}
               className="p-5 bg-[#121212] border border-white/10 rounded-2xl hover:border-white/20 transition-all space-y-3"
             >
               <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40 font-medium">{match.arena.split(",")[0]}</span>
+                <span className="text-white/40 font-medium">{match.arena.split(",")[0] || "Estadio a confirmar"}</span>
                 <span className="text-[#FF5C00] font-bold font-mono">{match.date}</span>
               </div>
 
               <div className="flex items-center justify-between py-2 text-sm font-bold text-white">
-                <span className="truncate max-w-[120px]">{match.homeTeam.split(" ")[0]}</span>
+                <span className="truncate max-w-[120px]">{usandoDatosDePrueba ? match.homeTeam.split(" ")[0] : match.homeTeam}</span>
                 <span className="text-xs text-white/30 font-mono px-2 py-0.5 bg-black/40 rounded">
                   VS
                 </span>
-                <span className="truncate max-w-[120px] text-right">{match.awayTeam.split(" ")[0]}</span>
+                <span className="truncate max-w-[120px] text-right">{usandoDatosDePrueba ? match.awayTeam.split(" ")[0] : match.awayTeam}</span>
               </div>
 
               <div className="text-xs text-white/40 pt-2 border-t border-white/5 flex items-center justify-between">
                 <span>{match.tv}</span>
-                <span className="text-white/60 font-medium">Salto inicial</span>
+                <span className="text-white/60 font-medium">
+                  {match.status === "finished"
+                    ? `${match.homeScore} - ${match.awayScore}`
+                    : match.status === "live"
+                    ? "En juego"
+                    : "Salto inicial"}
+                </span>
               </div>
             </div>
           ))}

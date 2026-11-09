@@ -20,7 +20,7 @@ import { LNB_PLAYERS } from "../../data/lnbData";
 import { useDatosLnb } from "../../context/DatosLnbContext";
 import { formatSalary, BasketballPlayer } from "../../types/basketball";
 import { COMMUNITY_LEAGUES, CommunityLeague } from "../../data/mockLeaguesAndMatches";
-import { fetchRealUsersAndFranchises, RealRankingUser } from "../../lib/rosterService";
+import { fetchRealUsersAndFranchises, RealRankingUser } from "../../api/rankingApi";
 import { useAuth } from "../../context/AuthContext";
 
 interface GlobalSearchModalProps {
@@ -41,7 +41,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   onGoToDashboard
 }) => {
   const { user } = useAuth();
-  const { jugadores } = useDatosLnb();
+  const { jugadores, numeroFecha } = useDatosLnb();
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<SearchTab>("all");
   const [joinedLeagues, setJoinedLeagues] = useState<string[]>([]);
@@ -273,7 +273,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                         <th className="py-3 px-4">Franquicia</th>
                         <th className="py-3 px-4 hidden sm:table-cell">Entrenador (DT)</th>
                         <th className="py-3 px-4 hidden md:table-cell">Club</th>
-                        <th className="py-3 px-4 text-center">Fecha 18</th>
+                        <th className="py-3 px-4 text-center">Fecha {numeroFecha}</th>
                         <th className="py-3 px-4 text-right">Puntos Totales</th>
                       </tr>
                     </thead>

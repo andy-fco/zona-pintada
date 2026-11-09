@@ -7,16 +7,16 @@ import {
   RosterSlot, 
   CoachSlot, 
   TeamRoster, 
-  TACTICAL_ROLES, 
   TacticalRoleId, 
-  formatSalary 
+  formatSalary,
+  getRoleMultiplier
 } from "../../types/basketball";
 import { LNB_PLAYERS, LNB_COACHES, TOTAL_BUDGET } from "../../data/lnbData";
 import { CourtView } from "./CourtView";
 import { PlayerMarketList } from "./PlayerMarketList";
 import { RosterSummaryBar } from "./RosterSummaryBar";
 import { PlayerDetailModal } from "./PlayerDetailModal";
-import { saveRoster, loadRoster, updateFranchiseName } from "../../lib/rosterService";
+import { saveRoster, loadRoster, updateFranchiseName, sugerirEquipoDesdeBack } from "../../api/equipoFantasyApi";
 import { generateBudgetCompliantTeam } from "../../utils/teamSuggester";
 import { useDatosLnb } from "../../context/DatosLnbContext";
 import { 
@@ -48,23 +48,25 @@ const DEFAULT_INITIAL_ROSTER = (): {
 } => ({
   starters: {
     PG: { slotId: 'starter-pg', slotLabel: 'Base Titular', requiredPosition: 'PG', isStarter: true, player: null, role: 'CAPTAIN' },
-    SG: { slotId: 'starter-sg', slotLabel: 'Escolta Titular', requiredPosition: 'SG', isStarter: true, player: null, role: 'CO_CAPTAIN' },
-    SF: { slotId: 'starter-sf', slotLabel: 'Alero Titular', requiredPosition: 'SF', isStarter: true, player: null, role: 'DEFENSIVE' },
-    PF: { slotId: 'starter-pf', slotLabel: 'Ala-Pívot Titular', requiredPosition: 'PF', isStarter: true, player: null, role: 'ROTATION' },
-    C: { slotId: 'starter-c', slotLabel: 'Pívot Titular', requiredPosition: 'C', isStarter: true, player: null, role: 'DEFENSIVE' },
+    SG: { slotId: 'starter-sg', slotLabel: 'Escolta Titular', requiredPosition: 'SG', isStarter: true, player: null, role: 'NORMAL' },
+    SF: { slotId: 'starter-sf', slotLabel: 'Alero Titular', requiredPosition: 'SF', isStarter: true, player: null, role: 'NORMAL' },
+    PF: { slotId: 'starter-pf', slotLabel: 'Ala-Pívot Titular', requiredPosition: 'PF', isStarter: true, player: null, role: 'NORMAL' },
+    C: { slotId: 'starter-c', slotLabel: 'Pívot Titular', requiredPosition: 'C', isStarter: true, player: null, role: 'NORMAL' },
   },
+  // El back pide 5 suplentes: uno por posición
   bench: [
-    { slotId: 'bench-1', slotLabel: 'Sexto Hombre', isStarter: false, player: null, role: 'SIXTH_MAN' },
-    { slotId: 'bench-2', slotLabel: 'Rotación 1', isStarter: false, player: null, role: 'ROTATION' },
-    { slotId: 'bench-3', slotLabel: 'Suplente 2', isStarter: false, player: null, role: 'BENCH' },
-    { slotId: 'bench-4', slotLabel: 'Suplente Profundo', isStarter: false, player: null, role: 'DEEP_BENCH' },
+    { slotId: 'bench-pg', slotLabel: 'Base Suplente', requiredPosition: 'PG', isStarter: false, player: null, role: 'SIXTH_MAN' },
+    { slotId: 'bench-sg', slotLabel: 'Escolta Suplente', requiredPosition: 'SG', isStarter: false, player: null, role: 'NORMAL' },
+    { slotId: 'bench-sf', slotLabel: 'Alero Suplente', requiredPosition: 'SF', isStarter: false, player: null, role: 'NORMAL' },
+    { slotId: 'bench-pf', slotLabel: 'Ala-Pívot Suplente', requiredPosition: 'PF', isStarter: false, player: null, role: 'NORMAL' },
+    { slotId: 'bench-c', slotLabel: 'Pívot Suplente', requiredPosition: 'C', isStarter: false, player: null, role: 'NORMAL' },
   ],
   coach: { coach: null }
 });
 
 export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => {
   const { user } = useAuth();
-  const { jugadores, dts, temporada } = useDatosLnb();
+  const { jugadores, dts, temporada, usandoDatosDePrueba } = useDatosLnb();
   const storageKey = user ? `zona_pintada_roster_${user.uid}` : "zona_pintada_roster_guest";
 
   const [activeView, setActiveView] = useState<"court" | "market">("court");
@@ -81,14 +83,26 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
+  // El back deja crear el equipo una sola vez por temporada:
+  // una vez creado, el plantel queda fijo (solo se puede cambiar el nombre)
+  const [equipoConfirmado, setEquipoConfirmado] = useState(false);
+
   // Position filter to pre-activate when user clicks an empty slot in Court View
   const [marketPositionFilter, setMarketPositionFilter] = useState<PlayerPosition | 'ALL' | 'COACH'>('ALL');
 
-  // Load saved lineup with Cloud Firestore and local fallback on mount
+  // Carga el equipo guardado en el back (si el usuario ya lo creó)
   useEffect(() => {
     let isMounted = true;
     loadRoster(user?.uid).then((saved) => {
       if (!isMounted || !saved) return;
+      setEquipoConfirmado(true);
+      // Plantillas guardadas con el formato viejo (4 suplentes, 7 roles) se descartan
+      const formatoValido =
+        saved.bench?.length === 5 &&
+        [...Object.values(saved.starters ?? {}), ...saved.bench].every(
+          (slot) => ['CAPTAIN', 'SIXTH_MAN', 'NORMAL'].includes(slot.role)
+        );
+      if (!formatoValido) return;
       if (saved.starters) setStarters(saved.starters);
       if (saved.bench) setBench(saved.bench);
       if (saved.coach) setCoach(saved.coach);
@@ -131,14 +145,12 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     let total = 0;
     (Object.values(starters) as RosterSlot[]).forEach((slot) => {
       if (slot.player) {
-        const mult = TACTICAL_ROLES[slot.role].multiplier;
-        total += slot.player.avgVal * mult;
+        total += slot.player.avgVal * getRoleMultiplier(slot.role, true);
       }
     });
     bench.forEach((slot) => {
       if (slot.player) {
-        const mult = TACTICAL_ROLES[slot.role].multiplier;
-        total += slot.player.avgVal * mult;
+        total += slot.player.avgVal * getRoleMultiplier(slot.role, false);
       }
     });
     if (coach.coach) {
@@ -161,6 +173,15 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     }, 3500);
   };
 
+  // Si el equipo ya está creado en el back, avisa y bloquea cambios en el plantel
+  const plantelBloqueado = () => {
+    if (equipoConfirmado) {
+      showAlert("Tu equipo ya está confirmado para esta temporada. Solo podés cambiarle el nombre.");
+      return true;
+    }
+    return false;
+  };
+
   // Add a player as a starter
   const handleSelectStarter = (player: BasketballPlayer) => {
     // Check if already in roster
@@ -168,6 +189,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
       showAlert(`${player.name} ya está en tu plantilla.`);
       return;
     }
+    if (plantelBloqueado()) return;
 
     const pos = player.position;
     const currentSlot = starters[pos];
@@ -195,30 +217,31 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
       showAlert(`${player.name} ya está en tu plantilla.`);
       return;
     }
+    if (plantelBloqueado()) return;
 
-    // Find first empty bench slot
-    const emptyIndex = bench.findIndex((slot) => slot.player === null);
-    if (emptyIndex === -1) {
-      showAlert("El banco de suplentes ya tiene 4 jugadores. Quita uno antes de agregar.");
-      return;
-    }
+    // Cada suplente va en el lugar de su posición (si estaba ocupado, lo reemplaza)
+    const slotIndex = bench.findIndex((slot) => slot.requiredPosition === player.position);
+    if (slotIndex === -1) return;
+    const currentSlot = bench[slotIndex];
 
-    if (spentBudget + player.price > TOTAL_BUDGET) {
+    const priceDiff = currentSlot.player ? player.price - currentSlot.player.price : player.price;
+    if (spentBudget + priceDiff > TOTAL_BUDGET) {
       showAlert(`Presupuesto insuficiente para fichar a ${player.name}.`);
     }
 
     const newBench = [...bench];
-    newBench[emptyIndex] = {
-      ...newBench[emptyIndex],
+    newBench[slotIndex] = {
+      ...currentSlot,
       player: player,
     };
     setBench(newBench);
 
-    showAlert(`${player.name} añadido al banco de suplentes.`);
+    showAlert(`${player.name} fichado como ${player.position} suplente.`);
   };
 
   // Select coach
   const handleSelectCoach = (selectedCoach: BasketballCoach) => {
+    if (plantelBloqueado()) return;
     const priceDiff = coach.coach ? selectedCoach.price - coach.coach.price : selectedCoach.price;
     if (spentBudget + priceDiff > TOTAL_BUDGET) {
       showAlert(`Presupuesto insuficiente para contratar a ${selectedCoach.name}.`);
@@ -230,6 +253,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Remove player from slot
   const handleRemovePlayer = (slotId: string) => {
+    if (plantelBloqueado()) return;
     // Check if starter
     for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {
       if (starters[key].slotId === slotId) {
@@ -251,27 +275,49 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Remove coach
   const handleRemoveCoach = () => {
+    if (plantelBloqueado()) return;
     setCoach({ coach: null });
     showAlert("Entrenador desvinculado.");
   };
 
   // Change tactical role of a slot
+  // El back exige 1 capitán (titular) y 1 sexto hombre (suplente):
+  // al elegir uno nuevo, el anterior pasa a normal.
   const handleChangeRole = (slotId: string, newRole: TacticalRoleId) => {
-    // Check starters
-    for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {
-      if (starters[key].slotId === slotId) {
-        setStarters((prev) => ({
-          ...prev,
-          [key]: { ...prev[key], role: newRole },
-        }));
-        return;
-      }
+    if (plantelBloqueado()) return;
+    const starterSlots = Object.values(starters) as RosterSlot[];
+    const isStarter = starterSlots.some((slot) => slot.slotId === slotId);
+    const currentSlot = isStarter
+      ? starterSlots.find((slot) => slot.slotId === slotId)
+      : bench.find((slot) => slot.slotId === slotId);
+    if (!currentSlot) return;
+
+    if (currentSlot.role === 'CAPTAIN' && newRole !== 'CAPTAIN') {
+      showAlert("Tiene que haber un capitán. Elegí a otro titular como capitán.");
+      return;
+    }
+    if (currentSlot.role === 'SIXTH_MAN' && newRole !== 'SIXTH_MAN') {
+      showAlert("Tiene que haber un sexto hombre. Elegí a otro suplente como sexto hombre.");
+      return;
     }
 
-    // Check bench
-    setBench((prev) =>
-      prev.map((slot) => (slot.slotId === slotId ? { ...slot, role: newRole } : slot))
-    );
+    const actualizar = (slot: RosterSlot): RosterSlot => {
+      if (slot.slotId === slotId) return { ...slot, role: newRole };
+      if (slot.role === newRole && newRole !== 'NORMAL') return { ...slot, role: 'NORMAL' };
+      return slot;
+    };
+
+    if (isStarter) {
+      setStarters((prev) => ({
+        PG: actualizar(prev.PG),
+        SG: actualizar(prev.SG),
+        SF: actualizar(prev.SF),
+        PF: actualizar(prev.PF),
+        C: actualizar(prev.C),
+      }));
+    } else {
+      setBench((prev) => prev.map(actualizar));
+    }
   };
 
   // Open detail modal for player
@@ -302,8 +348,18 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
   };
 
   // Autocomplete: Intelligently pick an optimal, balanced team strictly within $110M
-  const handleAutoComplete = () => {
-    const suggested = generateBudgetCompliantTeam(jugadores, dts);
+  // La sugerencia la arma el back. Solo con datos de prueba (sin back) se usa la del front.
+  const handleAutoComplete = async () => {
+    if (plantelBloqueado()) return;
+    let suggested;
+    try {
+      suggested = usandoDatosDePrueba
+        ? generateBudgetCompliantTeam(jugadores, dts)
+        : await sugerirEquipoDesdeBack(jugadores, dts);
+    } catch (e) {
+      showAlert(e instanceof Error ? e.message : "No se pudo sugerir un equipo.");
+      return;
+    }
     setStarters(suggested.starters);
     setBench(suggested.bench);
     setCoach(suggested.coach);
@@ -314,13 +370,14 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
 
   // Clear entire roster
   const handleClearRoster = () => {
+    if (plantelBloqueado()) return;
     setStarters(DEFAULT_INITIAL_ROSTER().starters);
     setBench(DEFAULT_INITIAL_ROSTER().bench);
     setCoach({ coach: null });
     showAlert("Plantilla vaciada por completo.");
   };
 
-  // Save roster to Cloud Firestore and local cache
+  // Guarda el equipo en el back: lo crea la primera vez; después solo actualiza el nombre
   const handleSaveRoster = async () => {
     if (spentBudget > TOTAL_BUDGET) {
       showAlert("No podés guardar un equipo que excede el tope de $110M.");
@@ -328,6 +385,12 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
     }
 
     try {
+      if (equipoConfirmado) {
+        const result = await updateFranchiseName(user?.uid, teamName);
+        showAlert(result.success ? "Nombre del equipo actualizado." : "No se pudo actualizar el nombre.");
+        return;
+      }
+
       const rosterData: TeamRoster = {
         teamName,
         starters,
@@ -335,19 +398,15 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
         coach,
         totalBudget: TOTAL_BUDGET,
       };
-      
-      const result = await saveRoster(user?.uid, rosterData, user?.displayName || user?.email?.split('@')[0]);
-      await updateFranchiseName(user?.uid, rosterData.teamName);
+
+      await saveRoster(user?.uid, rosterData, user?.displayName);
+      setEquipoConfirmado(true);
       setIsSavedSuccess(true);
-      if (result.cloudSynced) {
-        showAlert("¡Plantilla oficial guardada y sincronizada en la nube!");
-      } else {
-        showAlert("¡Plantilla oficial guardada con éxito!");
-      }
+      showAlert("¡Equipo creado! Quedó confirmado para toda la temporada.");
       setTimeout(() => setIsSavedSuccess(false), 3000);
     } catch (e) {
       console.error(e);
-      showAlert("Error al guardar la plantilla.");
+      showAlert(e instanceof Error ? e.message : "Error al guardar la plantilla.");
     }
   };
 
@@ -397,6 +456,12 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
             <p className="text-xs sm:text-sm text-white/50 uppercase tracking-wider font-semibold mt-1">
               Definí tu quinteto titular, suplentes y DT oficial con sus roles tácticos
             </p>
+            {equipoConfirmado && (
+              <p className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FF5C00]/10 border border-[#FF5C00]/30 text-[#FF5C00] text-[11px] font-bold uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Equipo confirmado para la temporada
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -482,24 +547,6 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
           selectedPlayerForDetail ? selectedPlayerIds.has(selectedPlayerForDetail.id) : false
         }
         currentRole={detailRole}
-        onChangeRole={(newRole) => {
-          if (selectedPlayerForDetail) {
-            // Find slot
-            for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {
-              if (starters[key].player?.id === selectedPlayerForDetail.id) {
-                handleChangeRole(starters[key].slotId, newRole);
-                setDetailRole(newRole);
-                return;
-              }
-            }
-            bench.forEach((b) => {
-              if (b.player?.id === selectedPlayerForDetail.id) {
-                handleChangeRole(b.slotId, newRole);
-                setDetailRole(newRole);
-              }
-            });
-          }
-        }}
         onRemove={() => {
           if (selectedPlayerForDetail) {
             for (const key of ['PG', 'SG', 'SF', 'PF', 'C'] as PlayerPosition[]) {

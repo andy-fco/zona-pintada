@@ -8,10 +8,26 @@ import { TeamBuilder } from "./components/TeamBuilder/TeamBuilder";
 import { AuthModal } from "./components/AuthModal";
 import { GlobalSearchModal } from "./components/Discovery/GlobalSearchModal";
 import { Footer } from "./components/Footer";
+import { AdminPanel } from "./components/Admin/AdminPanel";
+import { MiCuenta } from "./components/MiCuenta";
+
+export type AppView = "landing" | "builder" | "dashboard" | "admin" | "cuenta";
 
 function MainContent() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<"landing" | "builder" | "dashboard">("landing");
+  const [currentView, setCurrentView] = useState<AppView>("landing");
+  const esAdmin = user?.rol === "administrador";
+
+  // El admin no arma equipo: va a su panel. Y solo el admin puede ver el panel.
+  useEffect(() => {
+    if (esAdmin && (currentView === "builder" || currentView === "dashboard")) {
+      setCurrentView("admin");
+    } else if (!esAdmin && currentView === "admin") {
+      setCurrentView("landing");
+    } else if (!user && currentView === "cuenta") {
+      setCurrentView("landing");
+    }
+  }, [esAdmin, user, currentView]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -79,7 +95,11 @@ function MainContent() {
 
       {/* Main View Area */}
       <main className="flex-1">
-        {currentView === "builder" ? (
+        {currentView === "cuenta" && user ? (
+          <MiCuenta onCuentaEliminada={() => setCurrentView("landing")} />
+        ) : currentView === "admin" && esAdmin ? (
+          <AdminPanel />
+        ) : currentView === "builder" ? (
           <TeamBuilder onGoToDashboard={handleGoToDashboard} />
         ) : currentView === "dashboard" && user ? (
           <ProtectedDashboard 

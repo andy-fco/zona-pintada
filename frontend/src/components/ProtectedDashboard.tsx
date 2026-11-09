@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useDatosLnb } from "../context/DatosLnbContext";
+import { getMiRankingGeneral } from "../api/rankingApi";
 import { 
   LogOut, 
   ShieldCheck, 
@@ -29,7 +31,7 @@ import { LiveMatchdayView } from "./Dashboard/LiveMatchdayView";
 import { PrivateLeaguesView } from "./Dashboard/PrivateLeaguesView";
 import { GlobalRankingsView } from "./Dashboard/GlobalRankingsView";
 import { FixtureView } from "./Dashboard/FixtureView";
-import { loadRoster, updateFranchiseName } from "../lib/rosterService";
+import { loadRoster, updateFranchiseName } from "../api/equipoFantasyApi";
 
 interface ProtectedDashboardProps {
   onBackToLanding: () => void;
@@ -43,8 +45,16 @@ export const ProtectedDashboard: React.FC<ProtectedDashboardProps> = ({
   onOpenSearch
 }) => {
   const { user, signOut } = useAuth();
+  const { numeroFecha, finSemana, usandoDatosDePrueba } = useDatosLnb();
   const [activeTab, setActiveTab] = useState<"live" | "leagues" | "rankings" | "fixture">("live");
   const [savedRoster, setSavedRoster] = useState<TeamRoster | null>(null);
+
+  // Posición real en el ranking general
+  const [miRanking, setMiRanking] = useState<{ posicion: number; puntos: number; total: number } | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    getMiRankingGeneral().then(setMiRanking);
+  }, [user, savedRoster]);
 
   // Franchise Name state
   const [franchiseName, setFranchiseName] = useState<string>(() => {
@@ -198,9 +208,9 @@ export const ProtectedDashboard: React.FC<ProtectedDashboardProps> = ({
                 <span>Cuenta: <strong className="text-white font-mono">{user.email}</strong></span>
                 <span>•</span>
                 <span className="text-[#FF5C00] font-bold">
-                  {starterCount === 5 && benchCount === 4 && hasCoach 
-                    ? "Plantilla Completa (10/10 Fichados)" 
-                    : `${starterCount + benchCount + (hasCoach ? 1 : 0)}/10 Jugadores Confirmados`}
+                  {starterCount === 5 && benchCount === 5 && hasCoach 
+                    ? "Plantilla Completa (11/11 Fichados)" 
+                    : `${starterCount + benchCount + (hasCoach ? 1 : 0)}/11 Jugadores Confirmados`}
                 </span>
               </p>
             </div>
@@ -283,22 +293,28 @@ export const ProtectedDashboard: React.FC<ProtectedDashboardProps> = ({
               Ranking Global
             </span>
             <div className="text-xl font-bold font-mono text-[#FF5C00]">
-              #142
+              {usandoDatosDePrueba ? "#142" : miRanking ? `#${miRanking.posicion}` : "-"}
             </div>
             <p className="text-[11px] text-white/40 truncate">
-              {franchiseName} (Top 1%)
+              {usandoDatosDePrueba
+                ? `${franchiseName} (Top 1%)`
+                : miRanking
+                ? `${miRanking.puntos} pts • de ${miRanking.total} equipos`
+                : "Sin equipo en el ranking"}
             </p>
           </div>
 
           <div className="p-4 bg-[#121212] border border-white/10 rounded-xl space-y-1">
             <span className="text-[11px] font-bold text-white/40 uppercase">
-              Fecha 18 LNB
+              Fecha {numeroFecha} LNB
             </span>
             <div className="text-xl font-bold font-mono text-white">
               Activa
             </div>
             <p className="text-[11px] text-white/40">
-              Cierre: Viernes 20:00 hs
+              {finSemana
+                ? `Cierre: ${finSemana.split("-").reverse().slice(0, 2).join("/")}`
+                : "Cierre: Viernes 20:00 hs"}
             </p>
           </div>
 

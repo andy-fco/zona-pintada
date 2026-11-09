@@ -7,7 +7,8 @@ import {
   PlayerPosition, 
   TACTICAL_ROLES, 
   TacticalRoleId, 
-  formatSalary 
+  formatSalary,
+  getRoleMultiplier
 } from "../../types/basketball";
 import { 
   Plus, 
@@ -56,18 +57,10 @@ export const CourtView: React.FC<CourtViewProps> = ({
     switch (roleId) {
       case "CAPTAIN":
         return "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:border-amber-400 hover:bg-amber-500/15";
-      case "CO_CAPTAIN":
-        return "bg-orange-500/10 border-orange-500/30 text-[#FF5C00] hover:border-[#FF5C00] hover:bg-orange-500/15";
       case "SIXTH_MAN":
         return "bg-yellow-500/10 border-yellow-500/30 text-yellow-300 hover:border-yellow-400 hover:bg-yellow-500/15";
-      case "DEFENSIVE":
-        return "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-500/15";
-      case "ROTATION":
+      case "NORMAL":
         return "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/15";
-      case "BENCH":
-        return "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 hover:border-indigo-400 hover:bg-indigo-500/15";
-      case "DEEP_BENCH":
-        return "bg-slate-500/10 border-slate-500/30 text-slate-300 hover:border-slate-400 hover:bg-slate-500/15";
       default:
         return "bg-white/5 border-white/10 text-white/80 hover:border-white/30 hover:bg-white/10";
     }
@@ -182,7 +175,7 @@ export const CourtView: React.FC<CourtViewProps> = ({
               <div className="flex items-center gap-1.5">
                 <TacticalRoleIcon roleId={slot.role} size="sm" />
                 <span className="px-2 py-0.5 text-[11px] font-mono font-black bg-black/60 border border-white/10 rounded-md tracking-tight text-white">
-                  {roleInfo.multiplier.toFixed(2)}x
+                  {getRoleMultiplier(slot.role, slot.isStarter).toFixed(2)}x
                 </span>
               </div>
 
@@ -304,7 +297,7 @@ export const CourtView: React.FC<CourtViewProps> = ({
       {/* 2. BANCO DE SUPLENTES & CUERPO TÉCNICO */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Bench (4 Slots) - 8 cols */}
+        {/* Bench (5 Slots, uno por posición) - 8 cols */}
         <div className="lg:col-span-8 bg-[#0D0D0D] border border-white/10 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div>
@@ -312,15 +305,15 @@ export const CourtView: React.FC<CourtViewProps> = ({
                 Rotación de Apoyo
               </span>
               <h3 className="text-lg font-black italic uppercase text-white">
-                Banco de Suplentes (4 Fichas)
+                Banco de Suplentes (5 Fichas)
               </h3>
             </div>
             <span className="text-[10px] text-white/40 uppercase font-mono px-2 py-0.5 bg-white/5 rounded-md">
-              Cualquier Posición
+              Uno por Posición
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {bench.map((benchSlot) => (
               <div key={benchSlot.slotId} className="space-y-1.5">
                 <div className="text-[10px] font-black uppercase tracking-wider text-white/50 px-1">
