@@ -89,6 +89,16 @@ public class EquipoFantasyController {
         return ResponseEntity.ok(equipoFantasyService.listarResultados(id));
     }
 
+    @GetMapping("/{id}/semanas/{semanaId}")
+    public ResponseEntity<PuntosSemanaEquipoResponse> obtenerPuntosSemana(
+            @PathVariable Integer id,
+            @PathVariable Integer semanaId
+    ) {
+        return ResponseEntity.ok(
+                detallePuntosSemanaService.obtenerDeEquipo(id, semanaId)
+        );
+    }
+
     @PutMapping("/me/nombre")
     public ResponseEntity<EquipoFantasyResponse> actualizarNombreDelUsuario(
             @AuthenticationPrincipal Jwt jwt,

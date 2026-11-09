@@ -38,11 +38,7 @@ public class DetallePuntosSemanaService {
 
     @Transactional(readOnly = true)
     public PuntosSemanaEquipoResponse obtenerDelUsuario(Integer usuarioId, Integer semanaId) {
-        SemanaCompetencia semana = semanaRepository.findById(semanaId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "No existe la semana indicada."
-                ));
+        SemanaCompetencia semana = buscarSemana(semanaId);
 
         EquipoFantasy equipo = equipoFantasyRepository
                 .findByUsuario_IdAndTemporada_Id(usuarioId, semana.getTemporada().getId())
@@ -51,7 +47,40 @@ public class DetallePuntosSemanaService {
                         "No tenés un equipo fantasy en la temporada de esa semana."
                 ));
 
+        return armarDetalle(equipo, semana);
+    }
+
+    @Transactional(readOnly = true)
+    public PuntosSemanaEquipoResponse obtenerDeEquipo(Integer equipoFantasyId, Integer semanaId) {
+        SemanaCompetencia semana = buscarSemana(semanaId);
+
+        EquipoFantasy equipo = equipoFantasyRepository.findById(equipoFantasyId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No existe el equipo fantasy indicado."
+                ));
+
+        if (!equipo.getTemporada().getId().equals(semana.getTemporada().getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La semana no pertenece a la temporada del equipo."
+            );
+        }
+
+        return armarDetalle(equipo, semana);
+    }
+
+    private SemanaCompetencia buscarSemana(Integer semanaId) {
+        return semanaRepository.findById(semanaId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No existe la semana indicada."
+                ));
+    }
+
+    private PuntosSemanaEquipoResponse armarDetalle(EquipoFantasy equipo, SemanaCompetencia semana) {
         Integer equipoId = equipo.getId();
+        Integer semanaId = semana.getId();
         boolean cerrada = semana.getCerradaAt() != null;
 
         List<IntegranteResponse> jugadores = agrupar(
@@ -64,7 +93,7 @@ public class DetallePuntosSemanaService {
                 : puntosService.calcularSemanaAbierta(semanaId, List.of(equipo)).getOrDefault(equipoId, 0);
 
         return new PuntosSemanaEquipoResponse(
-                semana.getId(),
+                semanaId,
                 semana.getNumeroSemana(),
                 cerrada,
                 puntosEquipo,
