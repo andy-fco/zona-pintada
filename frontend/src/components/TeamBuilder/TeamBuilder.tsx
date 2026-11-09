@@ -16,7 +16,7 @@ import { CourtView } from "./CourtView";
 import { PlayerMarketList } from "./PlayerMarketList";
 import { RosterSummaryBar } from "./RosterSummaryBar";
 import { PlayerDetailModal } from "./PlayerDetailModal";
-import { saveRoster, loadRoster, updateFranchiseName } from "../../api/equipoFantasyApi";
+import { saveRoster, loadRoster, updateFranchiseName, sugerirEquipoDesdeBack } from "../../api/equipoFantasyApi";
 import { generateBudgetCompliantTeam } from "../../utils/teamSuggester";
 import { useDatosLnb } from "../../context/DatosLnbContext";
 import { 
@@ -66,7 +66,7 @@ const DEFAULT_INITIAL_ROSTER = (): {
 
 export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => {
   const { user } = useAuth();
-  const { jugadores, dts, temporada } = useDatosLnb();
+  const { jugadores, dts, temporada, usandoDatosDePrueba } = useDatosLnb();
   const storageKey = user ? `zona_pintada_roster_${user.uid}` : "zona_pintada_roster_guest";
 
   const [activeView, setActiveView] = useState<"court" | "market">("court");
@@ -348,9 +348,18 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({ onGoToDashboard }) => 
   };
 
   // Autocomplete: Intelligently pick an optimal, balanced team strictly within $110M
-  const handleAutoComplete = () => {
+  // La sugerencia la arma el back. Solo con datos de prueba (sin back) se usa la del front.
+  const handleAutoComplete = async () => {
     if (plantelBloqueado()) return;
-    const suggested = generateBudgetCompliantTeam(jugadores, dts);
+    let suggested;
+    try {
+      suggested = usandoDatosDePrueba
+        ? generateBudgetCompliantTeam(jugadores, dts)
+        : await sugerirEquipoDesdeBack(jugadores, dts);
+    } catch (e) {
+      showAlert(e instanceof Error ? e.message : "No se pudo sugerir un equipo.");
+      return;
+    }
     setStarters(suggested.starters);
     setBench(suggested.bench);
     setCoach(suggested.coach);

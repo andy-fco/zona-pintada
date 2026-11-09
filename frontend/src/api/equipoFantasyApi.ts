@@ -1,11 +1,18 @@
 import { api, getToken } from "./client";
 import { getEquipos, toBasketballPlayer, toBasketballCoach, toPlayerPosition, EquipoResponse } from "./lnbApi";
-import { TeamRoster, RosterSlot, TacticalRoleId, PlayerPosition } from "../types/basketball";
+import {
+  TeamRoster,
+  RosterSlot,
+  TacticalRoleId,
+  PlayerPosition,
+  BasketballPlayer,
+  BasketballCoach,
+  getRoleMultiplier,
+} from "../types/basketball";
+import { SuggestedTeam } from "../utils/teamSuggester";
 import { TOTAL_BUDGET } from "../data/lnbData";
 
 // Equipo fantasy contra el back de Spring (/api/equipos-fantasy).
-// Mantiene los mismos nombres que las funciones viejas de Firebase (lib/rosterService)
-// para que las pantallas solo tengan que cambiar el import.
 
 type RolBack = "capitan" | "sexto_hombre" | "normal";
 
@@ -228,3 +235,62 @@ export interface PuntosSemanaEquipoResponse {
 /** Puntos del equipo del usuario logueado en una semana (ya con multiplicadores). */
 export const getPuntosSemana = (semanaId: number) =>
   api<PuntosSemanaEquipoResponse>(`/equipos-fantasy/me/semanas/${semanaId}`);
+
+// ---------- Sugerencia de equipo (la arma el back) ----------
+
+interface SugerenciaEquipoResponse {
+  dtId: number;
+  jugadores: { jugadorId: number; titular: boolean; rol: RolBack }[];
+}
+
+/**
+ * Pide al back un equipo sugerido y lo arma con los jugadores y DTs que ya tiene el front.
+ * Tira error con el mensaje del back si no puede armarlo.
+ */
+export async function sugerirEquipoDesdeBack(
+  jugadores: BasketballPlayer[],
+  dts: BasketballCoach[]
+): Promise<SuggestedTeam> {
+  const sugerencia = await api<SugerenciaEquipoResponse>("/equipos-fantasy/sugerencia");
+
+  const slot = (pos: PlayerPosition, titular: boolean): RosterSlot => {
+    const elegido = sugerencia.jugadores
+      .filter((j) => j.titular === titular)
+      .map((j) => ({ ...j, jugador: jugadores.find((x) => x.id === String(j.jugadorId)) }))
+      .find((j) => j.jugador?.position === pos);
+    return {
+      slotId: `${titular ? "starter" : "bench"}-${pos.toLowerCase()}`,
+      slotLabel: `${NOMBRES[pos]} ${titular ? "Titular" : "Suplente"}`,
+      requiredPosition: pos,
+      isStarter: titular,
+      role: elegido ? ROL_A_FRONT[elegido.rol] : "NORMAL",
+      player: elegido?.jugador ?? null,
+    };
+  };
+
+  const starters = {
+    PG: slot("PG", true),
+    SG: slot("SG", true),
+    SF: slot("SF", true),
+    PF: slot("PF", true),
+    C: slot("C", true),
+  };
+  const bench = POSICIONES.map((pos) => slot(pos, false));
+  const dt = dts.find((d) => d.id === `dt-${sugerencia.dtId}`) ?? null;
+
+  const todos = [...Object.values(starters), ...bench];
+  if (todos.some((s) => !s.player) || !dt) {
+    throw new Error("La sugerencia del back no coincide con los jugadores cargados. Recargá la página.");
+  }
+
+  return {
+    starters,
+    bench,
+    coach: { coach: dt },
+    totalCost: dt.price + todos.reduce((suma, s) => suma + (s.player?.price ?? 0), 0),
+    projectedValuation: todos.reduce(
+      (suma, s) => suma + (s.player ? s.player.avgVal * getRoleMultiplier(s.role, s.isStarter) : 0),
+      0
+    ),
+  };
+}

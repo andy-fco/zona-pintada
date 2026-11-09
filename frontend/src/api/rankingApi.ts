@@ -2,8 +2,6 @@ import { api, getToken } from "./client";
 import { getSemanaActual } from "./lnbApi";
 
 // Ranking de equipos fantasy contra el back (/api/rankings).
-// Mantiene el nombre y el formato de la función vieja de Firebase (lib/rosterService)
-// para que las pantallas solo tengan que cambiar el import.
 
 interface PosicionRankingResponse {
   posicion: number;

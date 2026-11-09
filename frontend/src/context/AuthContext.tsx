@@ -9,7 +9,6 @@ import {
   UsuarioResponse,
 } from "../api/authApi";
 import { getToken } from "../api/client";
-import { syncUserProfile } from "../lib/rosterService";
 
 export interface AppUser {
   uid: string;
@@ -77,7 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await login(identificador, pass);
       const appUser = toAppUser(await obtenerUsuarioActual());
       setUser(appUser);
-      syncUserProfile({ uid: appUser.uid, email: appUser.email, displayName: appUser.displayName });
     } catch (err) {
       const message = mensajeDeError(err);
       setError(message);
