@@ -1,11 +1,12 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-import { Flame, LogIn, LogOut, User as UserIcon, Shield, Trophy, LayoutDashboard, Search } from "lucide-react";
+import { Flame, LogIn, LogOut, User as UserIcon, Shield, ShieldCheck, Trophy, LayoutDashboard, Search } from "lucide-react";
+import type { AppView } from "../App";
 
 interface NavbarProps {
   onOpenAuth: (mode: "login" | "signup") => void;
-  currentView: "landing" | "builder" | "dashboard";
-  setCurrentView: (view: "landing" | "builder" | "dashboard") => void;
+  currentView: AppView;
+  setCurrentView: (view: AppView) => void;
   onOpenSearch: () => void;
 }
 
@@ -16,6 +17,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch 
 }) => {
   const { user, signOut } = useAuth();
+  const esAdmin = user?.rol === "administrador";
+  // Para el admin, el botón de la derecha alterna entre el inicio y su panel
+  const vistaPrivada: AppView = esAdmin ? "admin" : "dashboard";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#0B0B0B]/90 backdrop-blur-md">
@@ -75,6 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             Inicio & LNB
           </button>
 
+          {!esAdmin && (
           <button
             id="btn-nav-builder"
             onClick={() => setCurrentView("builder")}
@@ -87,8 +92,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Flame className="w-3.5 h-3.5 text-[#FF5C00]" />
             <span>Mi Equipo</span>
           </button>
+          )}
 
-          {user && (
+          {esAdmin && (
+            <button
+              onClick={() => setCurrentView("admin")}
+              className={`px-3 py-1.5 text-xs font-bold uppercase transition-colors cursor-pointer rounded-lg flex items-center gap-1.5 ${
+                currentView === "admin"
+                  ? "bg-[#FF5C00] text-black"
+                  : "text-white/60 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Panel Admin</span>
+            </button>
+          )}
+
+          {user && !esAdmin && (
             <button
               onClick={() => setCurrentView("dashboard")}
               className={`px-3 py-1.5 text-xs font-bold uppercase transition-colors cursor-pointer rounded-lg ${
@@ -108,16 +128,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="flex items-center gap-2">
               <button
                 id="btn-toggle-dashboard"
-                onClick={() => setCurrentView(currentView === "dashboard" ? "landing" : "dashboard")}
+                onClick={() => setCurrentView(currentView === vistaPrivada ? "landing" : vistaPrivada)}
                 className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold uppercase rounded-xl transition-all cursor-pointer ${
-                  currentView === "dashboard"
+                  currentView === vistaPrivada
                     ? "bg-[#FF5C00] text-black shadow-lg shadow-orange-500/20"
                     : "bg-white/5 text-white hover:bg-white/10 border border-white/10"
                 }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
-                  {currentView === "dashboard" ? "Inicio" : "Franquicia"}
+                  {currentView === vistaPrivada ? "Inicio" : esAdmin ? "Admin" : "Franquicia"}
                 </span>
               </button>
 
